@@ -21,6 +21,12 @@ type DiscordMessage = {
   author?: { username?: string; global_name?: string };
   attachments?: { url: string; filename: string }[];
   type: number;
+  message_reference?: { message_id?: string };
+  referenced_message?: {
+    id?: string;
+    content?: string;
+    author?: { username?: string; global_name?: string };
+  } | null;
 };
 
 type StoredMessage = {
@@ -30,6 +36,11 @@ type StoredMessage = {
   editedAt?: string | null;
   content: string;
   attachments: { url: string; filename: string }[];
+  replyTo?: {
+    id: string;
+    author?: string;
+    content?: string;
+  };
 };
 
 type ChannelState = { initialized?: boolean; lastMessageId?: string };
@@ -120,13 +131,21 @@ function cleanContent(text: string) {
 }
 
 function toStoredMessage(m: DiscordMessage): StoredMessage {
+  const replyId = m.message_reference?.message_id || m.referenced_message?.id;
   return {
     id: m.id,
     author: m.author?.global_name || m.author?.username || 'unknown',
     timestamp: m.timestamp,
     editedAt: m.edited_timestamp,
     content: cleanContent(m.content || ''),
-    attachments: (m.attachments || []).map((a) => ({ url: a.url, filename: a.filename }))
+    attachments: (m.attachments || []).map((a) => ({ url: a.url, filename: a.filename })),
+    replyTo: replyId
+      ? {
+          id: replyId,
+          author: m.referenced_message?.author?.global_name || m.referenced_message?.author?.username,
+          content: cleanContent(m.referenced_message?.content || '').slice(0, 160)
+        }
+      : undefined
   };
 }
 

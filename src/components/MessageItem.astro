@@ -10,7 +10,12 @@ const isAudio = (name: string) => /\.(mp3|wav|ogg|m4a)$/i.test(name);
 const isPdf = (name: string) => /\.pdf$/i.test(name);
 ---
 
-<div class="py-3 border-b border-line/40 last:border-b-0">
+<div id={`m-${message.id}`} class="py-3 border-b border-line/40 last:border-b-0">
+  {message.replyTo ? (
+    <a href={`#m-${message.replyTo.id}`} class="block mb-1 pl-3 border-l-2 border-line text-xs text-muted hover:text-slate-300">
+      Replying to {message.replyTo.author || 'message'}{message.replyTo.content ? `: ${message.replyTo.content}` : ''}
+    </a>
+  ) : null}
   <div class="text-sm font-semibold text-slate-200">{message.author} <span class="text-xs text-muted font-normal">{new Date(message.timestamp).toISOString()}</span></div>
   {message.content ? (
     <div class="mt-1 prose prose-invert max-w-none discord-message-stream" set:html={html} />

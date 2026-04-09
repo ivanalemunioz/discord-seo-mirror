@@ -87,6 +87,11 @@ export async function getChannelPage(channelId: string, pageNumber: number) {
       editedAt?: string | null;
       content: string;
       attachments: Array<{ url: string; filename: string }>;
+      replyTo?: {
+        id: string;
+        author?: string;
+        content?: string;
+      };
     }>;
   };
 }

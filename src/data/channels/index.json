@@ -1,0 +1,100 @@
+[
+  {
+    "id": "1250937098546974751",
+    "name": "api",
+    "slug": "api",
+    "totalMessages": 183,
+    "totalPages": 2
+  },
+  {
+    "id": "1334218444358287462",
+    "name": "ask-ai",
+    "slug": "ask-ai",
+    "totalMessages": 469,
+    "totalPages": 5
+  },
+  {
+    "id": "1258409857237647420",
+    "name": "bienvenidos",
+    "slug": "bienvenidos",
+    "totalMessages": 1,
+    "totalPages": 1
+  },
+  {
+    "id": "1285335030402646067",
+    "name": "foro",
+    "slug": "foro",
+    "totalMessages": 0,
+    "totalPages": 0
+  },
+  {
+    "id": "1250797858018562159",
+    "name": "general",
+    "slug": "general",
+    "totalMessages": 1215,
+    "totalPages": 13
+  },
+  {
+    "id": "1362075128225071166",
+    "name": "make",
+    "slug": "make",
+    "totalMessages": 0,
+    "totalPages": 0
+  },
+  {
+    "id": "1362075091168526426",
+    "name": "n8n",
+    "slug": "n8n",
+    "totalMessages": 75,
+    "totalPages": 1
+  },
+  {
+    "id": "1250937011502579793",
+    "name": "nodejs",
+    "slug": "nodejs",
+    "totalMessages": 226,
+    "totalPages": 3
+  },
+  {
+    "id": "1336879215114453062",
+    "name": "novedades",
+    "slug": "novedades",
+    "totalMessages": 9,
+    "totalPages": 1
+  },
+  {
+    "id": "1250937031056429146",
+    "name": "php",
+    "slug": "php",
+    "totalMessages": 295,
+    "totalPages": 3
+  },
+  {
+    "id": "1250937047703879833",
+    "name": "python",
+    "slug": "python",
+    "totalMessages": 59,
+    "totalPages": 1
+  },
+  {
+    "id": "1250937061490429953",
+    "name": "ruby",
+    "slug": "ruby",
+    "totalMessages": 4,
+    "totalPages": 1
+  },
+  {
+    "id": "1397527397414342800",
+    "name": "vb6",
+    "slug": "vb6",
+    "totalMessages": 39,
+    "totalPages": 1
+  },
+  {
+    "id": "1362075044431270079",
+    "name": "vfp",
+    "slug": "vfp",
+    "totalMessages": 37,
+    "totalPages": 1
+  }
+]
