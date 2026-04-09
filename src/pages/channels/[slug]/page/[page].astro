@@ -28,12 +28,12 @@ const newerHref = channel && currentPage < channel.totalPages ? `/channels/${slu
 ---
 <MainLayout title={`#${channel?.name ?? slug}`} channels={channels}>
   <section>
-    <header class="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-line pb-3">
+    <header class="fixed top-0 left-0 right-0 lg:left-[280px] z-20 bg-background/95 backdrop-blur border-b border-line pb-3 px-4 lg:px-8 pt-4">
       <Breadcrumbs items={[{ label: 'Channels', href: '/channels' }, { label: `#${channel?.name ?? slug}`, href: `/channels/${slug}` }]} />
       <h1 class="text-xl md:text-2xl font-semibold"># {channel?.name}</h1>
     </header>
 
-    <article id="message-root" class="p-1 md:p-2 mt-4">
+    <article id="message-root" class="p-1 md:p-2 mt-24">
       <div class="mb-4 flex items-center justify-between">
         {olderHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={olderHref}>← Older messages</a> : <span class="text-muted text-sm">Oldest page</span>}
         <span />
