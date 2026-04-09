@@ -7,7 +7,7 @@ import { getDiscussions, getChannelNav } from '@/lib/content';
 
 export async function getStaticPaths() {
   const discussions = await getDiscussions();
-  return discussions.map((d) => ({ params: { slug: d.data.slug }, props: { discussion: d } }));
+  return discussions.map((d) => ({ params: { slug: d.slug }, props: { discussion: d } }));
 }
 
 const { discussion } = Astro.props;
