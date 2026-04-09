@@ -7,6 +7,7 @@ import { getDiscussions, getChannelNav } from '@/lib/content';
 const PAGE_SIZE = 10;
 
 export async function getStaticPaths() {
+  const PAGE_SIZE = 10;
   const channels = await getChannelNav();
   const discussions = await getDiscussions();
 
