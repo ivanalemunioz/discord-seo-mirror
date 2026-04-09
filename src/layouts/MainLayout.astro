@@ -35,7 +35,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
           <a class="channel-row" href="/latest">Latest</a>
           <a class="channel-row" href="/channels">Channels</a>
           {channels.map((channel) => (
-            <a class="channel-row" href={`/channels/${channel.slug}`}>
+            <a class="channel-row" href={`/channels/${channel.slug}/page/1`}>
               <span># {channel.name}</span>
               <span class="ml-auto text-xs">{channel.count}</span>
             </a>
