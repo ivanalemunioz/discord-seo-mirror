@@ -47,7 +47,7 @@ const newerHref = currentPage < totalPages ? `/channels/${slug}/page/${currentPa
 
     <article id="message-root" class="card p-4 md:p-6 mt-4">
       <div class="mb-4 flex items-center justify-between">
-        {olderHref ? <a class="channel-row" href={olderHref}>← Older messages</a> : <span class="text-muted text-sm">Oldest page</span>}
+        {olderHref ? <a class="channel-row" href={olderHref}>Older messages</a> : <span class="text-muted text-sm">Oldest page</span>}
         <span class="text-xs text-muted">Page {currentPage} / {totalPages}</span>
       </div>
 
@@ -60,7 +60,7 @@ const newerHref = currentPage < totalPages ? `/channels/${slug}/page/${currentPa
       )}
 
       <div class="mt-6 flex items-center justify-between">
-        {newerHref ? <a class="channel-row" href={newerHref}>Newest messages →</a> : <span class="text-muted text-sm">Already newest page</span>}
+        {newerHref ? <a class="channel-row" href={newerHref}>Newest messages</a> : <span class="text-muted text-sm">Already newest page</span>}
         {entry ? <a class="channel-row" href={`/community/${entry.slug}`}>Permalink page ↗</a> : <span />}
       </div>
     </article>

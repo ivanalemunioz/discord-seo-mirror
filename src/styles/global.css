@@ -15,6 +15,11 @@ a { @apply text-blue-300 hover:text-blue-200; }
 .discord-message-stream h3:first-child {
   @apply mt-0;
 }
+.discord-message-stream h3 a[aria-hidden="true"],
+.discord-message-stream h3 .anchor,
+.discord-message-stream h3 .heading-link {
+  display: none !important;
+}
 .discord-message-stream p {
   @apply text-[15px] leading-6 text-slate-300 mt-0 mb-2;
 }
