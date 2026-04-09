@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 :root { color-scheme: dark; }
+html, body { overflow-x: hidden; }
 body { @apply bg-background text-text antialiased; }
 a { @apply text-blue-300 hover:text-blue-200; }
 .card { @apply bg-surface border border-line rounded-xl; }
@@ -18,6 +19,15 @@ a { @apply text-blue-300 hover:text-blue-200; }
 .discord-message-stream p {
   @apply text-[15px] leading-6 text-slate-300 mt-0 mb-2;
 }
+.discord-message-stream,
+.discord-message-stream * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.discord-message-stream {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 .discord-message-stream pre {
   @apply bg-[#1b1d20] border border-line rounded-lg p-3 overflow-x-auto;
 }
@@ -29,4 +39,11 @@ a { @apply text-blue-300 hover:text-blue-200; }
 }
 .discord-message-stream a {
   @apply text-blue-300 hover:text-blue-200 underline;
+  overflow-wrap: anywhere;
+}
+.discord-message-stream img,
+.discord-message-stream video,
+.discord-message-stream iframe,
+.discord-message-stream audio {
+  max-width: 100%;
 }
