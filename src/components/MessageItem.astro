@@ -13,7 +13,7 @@ const isPdf = (name: string) => /\.pdf$/i.test(name);
 <div id={`m-${message.id}`} class="message-row py-3 border-b border-line/40 last:border-b-0">
   {message.replyTo ? (
     <a href={`#m-${message.replyTo.id}`} class="mb-1 flex items-center gap-2 text-xs text-muted hover:text-slate-300 min-w-0">
-      <span class="inline-block h-4 w-5 shrink-0 border-l-2 border-t-2 border-line/80 rounded-tl-md" />
+      <span class="inline-block h-3 w-5 shrink-0 border-l-2 border-t-2 border-line/80 rounded-tl-md -mb-3 -mr-1" />
       <span class="truncate min-w-0">
         <span class="font-semibold text-slate-300">{message.replyTo.author || 'message'}</span>
         {message.replyTo.content ? <span class="ml-1">{message.replyTo.content}</span> : null}
