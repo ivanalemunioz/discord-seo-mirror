@@ -3,6 +3,11 @@ import { marked } from 'marked';
 
 const { message } = Astro.props;
 const html = message.content ? marked.parse(message.content, { breaks: true }) : '';
+
+const isImage = (name: string) => /\.(png|jpe?g|gif|webp|svg)$/i.test(name);
+const isVideo = (name: string) => /\.(mp4|webm|mov|m4v)$/i.test(name);
+const isAudio = (name: string) => /\.(mp3|wav|ogg|m4a)$/i.test(name);
+const isPdf = (name: string) => /\.pdf$/i.test(name);
 ---
 
 <div class="py-3 border-b border-line/40 last:border-b-0">
@@ -10,11 +15,31 @@ const html = message.content ? marked.parse(message.content, { breaks: true }) :
   {message.content ? (
     <div class="mt-1 prose prose-invert max-w-none discord-message-stream" set:html={html} />
   ) : null}
+
   {message.attachments?.length ? (
-    <ul class="mt-2 text-sm">
+    <div class="mt-2 space-y-3">
       {message.attachments.map((a: { url: string; filename: string }) => (
-        <li>- <a href={a.url} target="_blank" rel="noreferrer">{a.filename}</a></li>
+        <div>
+          {isImage(a.filename) ? (
+            <a href={a.url} target="_blank" rel="noreferrer">
+              <img src={a.url} alt={a.filename} loading="lazy" class="max-h-96 rounded-lg border border-line" />
+            </a>
+          ) : isVideo(a.filename) ? (
+            <video controls preload="metadata" class="w-full max-h-96 rounded-lg border border-line">
+              <source src={a.url} />
+            </video>
+          ) : isAudio(a.filename) ? (
+            <audio controls preload="none" class="w-full">
+              <source src={a.url} />
+            </audio>
+          ) : isPdf(a.filename) ? (
+            <iframe src={a.url} title={a.filename} class="w-full h-96 rounded-lg border border-line" loading="lazy"></iframe>
+          ) : null}
+          <div class="mt-1 text-sm">
+            <a href={a.url} target="_blank" rel="noreferrer">{a.filename}</a>
+          </div>
+        </div>
       ))}
-    </ul>
+    </div>
   ) : null}
 </div>
