@@ -31,7 +31,7 @@ const { Content } = latest ? await render(latest) : { Content: null };
       <article id="message-root" class="card p-4 md:p-6 mt-4">
         <div class="mb-4 flex items-center justify-between">
           {latest.data.pageNumber > 1
-            ? <a class="channel-row" href={`/channels/${slug}/page/${latest.data.pageNumber - 1}`}>Older messages</a>
+            ? <a class="text-sm text-blue-300 hover:text-blue-200" href={`/channels/${slug}/page/${latest.data.pageNumber - 1}`}>← Older messages</a>
             : <span class="text-muted text-sm">Start of channel history</span>}
           <span class="text-xs text-muted">Page {latest.data.pageNumber} / {latest.data.totalPages}</span>
         </div>
@@ -42,7 +42,7 @@ const { Content } = latest ? await render(latest) : { Content: null };
 
         <div class="mt-6 flex justify-between items-center">
           <span class="text-muted text-sm">You are on newest messages</span>
-          <a class="channel-row" href={`/community/${latest.slug}`}>Permalink page ↗</a>
+          <a class="text-sm text-blue-300 hover:text-blue-200" href={`/community/${latest.slug}`}>Permalink page ↗</a>
         </div>
       </article>
 
