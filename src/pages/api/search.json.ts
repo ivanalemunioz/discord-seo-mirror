@@ -1,7 +1,7 @@
-import { getCollection } from 'astro:content';
+import { getDiscussions } from '@/lib/content';
 
 export async function GET() {
-  const discussions = await getCollection('discussions');
+  const discussions = await getDiscussions();
   const payload = discussions.map((d) => ({
     title: d.data.title,
     slug: d.slug,

@@ -1,22 +1,16 @@
 ---
-import { render } from 'astro:content';
 import MainLayout from '@/layouts/MainLayout.astro';
 import Breadcrumbs from '@/components/Breadcrumbs.astro';
-import { getDiscussions, getChannelNav } from '@/lib/content';
+import MessageItem from '@/components/MessageItem.astro';
+import { getChannelNav, getChannelPage } from '@/lib/content';
 
 export async function getStaticPaths() {
   const channels = await getChannelNav();
-  const discussions = await getDiscussions();
-
   const paths: { params: { slug: string; page: string } }[] = [];
-  for (const channel of channels) {
-    const pages = discussions
-      .filter((d) => d.data.channelId === channel.id)
-      .map((d) => d.data.pageNumber);
-    const maxPage = pages.length ? Math.max(...pages) : 1;
 
-    for (let p = 1; p <= maxPage; p++) {
-      paths.push({ params: { slug: channel.slug, page: String(p) } });
+  for (const c of channels) {
+    for (let p = 1; p <= (c.totalPages || 1); p++) {
+      paths.push({ params: { slug: c.slug, page: String(p) } });
     }
   }
 
@@ -27,21 +21,15 @@ const { slug, page } = Astro.params;
 const currentPage = Number(page || '1');
 const channels = await getChannelNav();
 const channel = channels.find((c) => c.slug === slug);
-
-const entry = (await getDiscussions()).find(
-  (d) => d.data.channelId === channel?.id && d.data.pageNumber === currentPage
-);
-
-const { Content } = entry ? await render(entry) : { Content: null };
-const totalPages = entry?.data.totalPages ?? 1;
+const pageData = channel ? await getChannelPage(channel.id, currentPage) : null;
 
 const olderHref = currentPage > 1 ? `/channels/${slug}/page/${currentPage - 1}` : null;
-const newerHref = currentPage < totalPages ? `/channels/${slug}/page/${currentPage + 1}` : null;
+const newerHref = channel && currentPage < channel.totalPages ? `/channels/${slug}/page/${currentPage + 1}` : null;
 ---
-<MainLayout title={`#${channel?.name ?? slug} · Page ${currentPage}`} channels={channels}>
+<MainLayout title={`#${channel?.name ?? slug}`} channels={channels}>
   <section>
     <header class="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-line pb-3">
-      <Breadcrumbs items={[{ label: 'Channels', href: '/channels' }, { label: `#${channel?.name ?? slug}`, href: `/channels/${slug}` }, { label: `Page ${currentPage}` }]} />
+      <Breadcrumbs items={[{ label: 'Channels', href: '/channels' }, { label: `#${channel?.name ?? slug}`, href: `/channels/${slug}` }]} />
       <h1 class="text-xl md:text-2xl font-semibold"># {channel?.name}</h1>
     </header>
 
@@ -51,17 +39,11 @@ const newerHref = currentPage < totalPages ? `/channels/${slug}/page/${currentPa
         <span />
       </div>
 
-      {entry && Content ? (
-        <div class="prose prose-invert max-w-none discord-message-stream">
-          <Content />
-        </div>
-      ) : (
-        <p class="text-muted mt-6">This page does not exist yet.</p>
-      )}
+      {pageData ? pageData.messages.map((m) => <MessageItem message={m} />) : <p class="text-muted">This page does not exist yet.</p>}
 
       <div class="mt-6 flex items-center justify-between">
         {newerHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={newerHref}>Newest messages →</a> : <span class="text-muted text-sm">Already newest page</span>}
-        {entry ? <a class="text-sm text-blue-300 hover:text-blue-200" href={`/community/${entry.slug}`}>Permalink page ↗</a> : <span />}
+        <span />
       </div>
     </article>
 

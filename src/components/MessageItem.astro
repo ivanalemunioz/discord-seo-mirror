@@ -1,0 +1,20 @@
+---
+import { marked } from 'marked';
+
+const { message } = Astro.props;
+const html = message.content ? marked.parse(message.content, { breaks: true }) : '';
+---
+
+<div class="py-3 border-b border-line/40 last:border-b-0">
+  <div class="text-sm font-semibold text-slate-200">{message.author} <span class="text-xs text-muted font-normal">{new Date(message.timestamp).toISOString()}</span></div>
+  {message.content ? (
+    <div class="mt-1 prose prose-invert max-w-none discord-message-stream" set:html={html} />
+  ) : null}
+  {message.attachments?.length ? (
+    <ul class="mt-2 text-sm">
+      {message.attachments.map((a: { url: string; filename: string }) => (
+        <li>- <a href={a.url} target="_blank" rel="noreferrer">{a.filename}</a></li>
+      ))}
+    </ul>
+  ) : null}
+</div>

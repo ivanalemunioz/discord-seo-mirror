@@ -1,38 +1,30 @@
 ---
-import { render } from 'astro:content';
 import MainLayout from '@/layouts/MainLayout.astro';
 import Breadcrumbs from '@/components/Breadcrumbs.astro';
-import DiscussionCard from '@/components/DiscussionCard.astro';
-import { getDiscussions, getChannelNav } from '@/lib/content';
+import MessageItem from '@/components/MessageItem.astro';
+import { getDiscussions, getChannelNav, getChannelPage } from '@/lib/content';
 
 export async function getStaticPaths() {
   const discussions = await getDiscussions();
-  return discussions.map((d) => ({ params: { slug: d.slug }, props: { discussion: d } }));
+  return discussions.map((d) => ({ params: { slug: d.slug } }));
 }
 
-const { discussion } = Astro.props;
-const { Content } = await render(discussion);
+const { slug } = Astro.params;
 const channels = await getChannelNav();
-const related = (await getDiscussions())
-  .filter((d) => d.id !== discussion.id && d.data.channelId === discussion.data.channelId)
-  .slice(0, 4);
+const match = slug?.match(/^(.*)-p(\d+)$/);
+const channelSlug = match?.[1];
+const pageNumber = Number(match?.[2] || '1');
+const channel = channels.find((c) => c.slug === channelSlug);
+const page = channel ? await getChannelPage(channel.id, pageNumber) : null;
 ---
-<MainLayout title={discussion.data.title} description={discussion.data.excerpt} channels={channels}>
-  <Breadcrumbs items={[{ label: 'Community', href: '/' }, { label: `#${discussion.data.channelName}`, href: `/channels/${channels.find(c=>c.id===discussion.data.channelId)?.slug}` }, { label: discussion.data.title }]} />
-  <article class="card p-6">
-    <h1 class="text-3xl font-bold">{discussion.data.title}</h1>
-    <div class="mt-2 text-sm text-muted">#{discussion.data.channelName} · {discussion.data.messageCount} messages · Updated {discussion.data.updatedAt.toISOString().slice(0,10)}</div>
-    <div class="prose prose-invert max-w-none mt-6">
-      <Content />
-    </div>
-  </article>
+<MainLayout title={`Community · ${slug}`} channels={channels}>
+  <Breadcrumbs items={[{ label: 'Community', href: '/' }, { label: `#${channel?.name ?? 'unknown'}`, href: channel ? `/channels/${channel.slug}` : '/channels' }, { label: `Page ${pageNumber}` }]} />
 
-  {related.length > 0 && (
-    <section class="mt-8">
-      <h2 class="text-xl font-semibold mb-4">Related discussions</h2>
-      <div class="grid gap-4">
-        {related.map((item) => <DiscussionCard item={item} />)}
-      </div>
-    </section>
+  {page ? (
+    <article class="p-1 md:p-2">
+      {page.messages.map((m) => <MessageItem message={m} />)}
+    </article>
+  ) : (
+    <p class="text-muted">Discussion page not found.</p>
   )}
 </MainLayout>

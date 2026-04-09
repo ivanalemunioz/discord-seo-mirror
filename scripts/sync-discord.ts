@@ -2,9 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const API = 'https://discord.com/api/v10';
-const DISCUSSIONS_DIR = path.resolve('src/content/discussions');
+const DATA_DIR = path.resolve('src/data/channels');
 const STATE_FILE = path.resolve('.cache/sync-state.json');
-const CHANNEL_CACHE_DIR = path.resolve('.cache/channel-messages');
 const PAGE_SIZE = 100;
 
 type Channel = {
@@ -14,7 +13,7 @@ type Channel = {
   permission_overwrites?: { id: string; type: number; allow: string; deny: string }[];
 };
 
-type Message = {
+type DiscordMessage = {
   id: string;
   content: string;
   timestamp: string;
@@ -24,22 +23,23 @@ type Message = {
   type: number;
 };
 
-type ChannelState = {
-  initialized?: boolean;
-  lastMessageId?: string;
+type StoredMessage = {
+  id: string;
+  author: string;
+  timestamp: string;
+  editedAt?: string | null;
+  content: string;
+  attachments: { url: string; filename: string }[];
 };
 
-type State = {
-  channels: Record<string, ChannelState>;
-};
+type ChannelState = { initialized?: boolean; lastMessageId?: string };
+type State = { channels: Record<string, ChannelState> };
 
 const env = {
   token: process.env.DISCORD_BOT_TOKEN,
   guildId: process.env.DISCORD_GUILD_ID,
   include: new Set((process.env.SYNC_INCLUDE_CHANNEL_IDS || '').split(',').map((x) => x.trim()).filter(Boolean)),
-  exclude: new Set((process.env.SYNC_EXCLUDE_CHANNEL_IDS || '').split(',').map((x) => x.trim()).filter(Boolean)),
-  // 0 = unlimited full backfill on first sync
-  initialBackfillLimit: Number(process.env.SYNC_INITIAL_BACKFILL_LIMIT || 0)
+  exclude: new Set((process.env.SYNC_EXCLUDE_CHANNEL_IDS || '').split(',').map((x) => x.trim()).filter(Boolean))
 };
 
 if (!env.token || !env.guildId) {
@@ -49,27 +49,6 @@ if (!env.token || !env.guildId) {
 
 const headers = { Authorization: `Bot ${env.token}` };
 
-async function api<T>(pathname: string): Promise<T> {
-  while (true) {
-    const res = await fetch(`${API}${pathname}`, { headers });
-    if (res.ok) return (await res.json()) as T;
-
-    if (res.status === 429) {
-      let retryAfterMs = 1000;
-      try {
-        const body = await res.json() as { retry_after?: number };
-        retryAfterMs = Math.ceil((body.retry_after ?? 1) * 1000);
-      } catch {
-        // ignore parse errors
-      }
-      await new Promise((r) => setTimeout(r, retryAfterMs + 100));
-      continue;
-    }
-
-    throw new Error(`Discord API ${pathname} failed: ${res.status} ${await res.text()}`);
-  }
-}
-
 const VIEW = 1n << 10n;
 const READ_HISTORY = 1n << 16n;
 
@@ -77,12 +56,9 @@ function hasBit(value: string, bit: bigint) {
   return (BigInt(value) & bit) === bit;
 }
 
-function compareIds(a: string, b: string) {
-  const A = BigInt(a);
-  const B = BigInt(b);
-  if (A < B) return -1;
-  if (A > B) return 1;
-  return 0;
+function cmpSnowflake(a: string, b: string) {
+  const A = BigInt(a); const B = BigInt(b);
+  return A < B ? -1 : A > B ? 1 : 0;
 }
 
 function slugify(s: string) {
@@ -100,14 +76,23 @@ function isPublicChannel(channel: Channel) {
   return true;
 }
 
+async function api<T>(pathname: string): Promise<T> {
+  while (true) {
+    const res = await fetch(`${API}${pathname}`, { headers });
+    if (res.ok) return (await res.json()) as T;
+    if (res.status === 429) {
+      const body = await res.json().catch(() => ({ retry_after: 1 }));
+      await new Promise((r) => setTimeout(r, Math.ceil((body.retry_after ?? 1) * 1000) + 100));
+      continue;
+    }
+    throw new Error(`Discord API ${pathname} failed: ${res.status} ${await res.text()}`);
+  }
+}
+
 async function readState(): Promise<State> {
   try {
-    const txt = await fs.readFile(STATE_FILE, 'utf8');
-    const raw = JSON.parse(txt) as any;
-
-    if (raw?.channels) return raw as State;
-
-    // backward compatibility from old shape: { cursorByChannel: { [id]: lastId } }
+    const raw = JSON.parse(await fs.readFile(STATE_FILE, 'utf8')) as any;
+    if (raw?.channels) return raw;
     if (raw?.cursorByChannel) {
       const channels: Record<string, ChannelState> = {};
       for (const [id, lastMessageId] of Object.entries(raw.cursorByChannel as Record<string, string>)) {
@@ -115,7 +100,6 @@ async function readState(): Promise<State> {
       }
       return { channels };
     }
-
     return { channels: {} };
   } catch {
     return { channels: {} };
@@ -127,128 +111,54 @@ async function writeState(state: State) {
   await fs.writeFile(STATE_FILE, JSON.stringify(state, null, 2), 'utf8');
 }
 
-async function loadChannelCache(channelId: string): Promise<Message[]> {
-  try {
-    const p = path.join(CHANNEL_CACHE_DIR, `${channelId}.json`);
-    return JSON.parse(await fs.readFile(p, 'utf8')) as Message[];
-  } catch {
-    return [];
-  }
-}
-
-async function saveChannelCache(channelId: string, messages: Message[]) {
-  await fs.mkdir(CHANNEL_CACHE_DIR, { recursive: true });
-  const p = path.join(CHANNEL_CACHE_DIR, `${channelId}.json`);
-  await fs.writeFile(p, JSON.stringify(messages), 'utf8');
-}
-
-function clean(text: string) {
-  return text
+function cleanContent(text: string) {
+  return (text || '')
     .replace(/<@!?\d+>/g, '@user')
     .replace(/<#\d+>/g, '#channel')
     .replace(/<a?:\w+:\d+>/g, '')
     .trim();
 }
 
-function normalizeMarkdown(text: string) {
-  const lines = text.split('\n').map((line) => {
-    const trimmed = line.trim();
-    // keep proper fence lines (``` or ```lang)
-    if (trimmed.startsWith('```')) return line;
-    // escape malformed inline fences that break markdown parsing
-    if (line.includes('```')) return line.replace(/```/g, '\\`\\`\\`');
-    return line;
-  });
-
-  const fenceCount = lines.filter((l) => l.trim().startsWith('```')).length;
-  if (fenceCount % 2 !== 0) lines.push('```');
-
-  return lines.join('\n');
-}
-
-function messageToBlock(m: Message) {
-  const who = m.author?.global_name || m.author?.username || 'unknown';
-  const raw = clean(m.content || '');
-  const line = normalizeMarkdown(raw);
-  const at = new Date(m.timestamp).toISOString();
-  const atts = (m.attachments || []).map((a) => `- Attachment: [${a.filename}](${a.url})`).join('\n');
-  return `### ${who} · ${at}\n\n${line || '_attachment_'}\n${atts}`.trim();
-}
-
-function pageDoc(channel: Channel, pageMessages: Message[], pageNumber: number, totalPages: number) {
-  const first = pageMessages[0];
-  const last = pageMessages.at(-1);
-  if (!first || !last) return '';
-
-  const body = pageMessages
-    .filter((m) => m.type === 0 && (m.content?.trim() || m.attachments?.length))
-    .map(messageToBlock)
-    .join('\n\n');
-
-  const title = `#${channel.name} · Page ${pageNumber}`;
-  const excerpt = clean(first.content || `Messages from #${channel.name}`).slice(0, 180);
-
-  return `---
-title: ${JSON.stringify(title)}
-channelId: ${JSON.stringify(channel.id)}
-channelName: ${JSON.stringify(channel.name)}
-threadId: ${JSON.stringify(channel.id)}
-sourceUrl: ${JSON.stringify('https://discord.com')}
-messageCount: ${pageMessages.length}
-author: ${JSON.stringify(first.author?.global_name || first.author?.username || 'unknown')}
-publishedAt: ${JSON.stringify(first.timestamp)}
-updatedAt: ${JSON.stringify(last.edited_timestamp || last.timestamp)}
-tags: [${JSON.stringify(channel.name)}]
-excerpt: ${JSON.stringify(excerpt)}
-pageNumber: ${pageNumber}
-totalPages: ${totalPages}
-firstMessageId: ${JSON.stringify(first.id)}
-lastMessageId: ${JSON.stringify(last.id)}
----
-
-${body || '_No content_'}
-`;
+function toStoredMessage(m: DiscordMessage): StoredMessage {
+  return {
+    id: m.id,
+    author: m.author?.global_name || m.author?.username || 'unknown',
+    timestamp: m.timestamp,
+    editedAt: m.edited_timestamp,
+    content: cleanContent(m.content || ''),
+    attachments: (m.attachments || []).map((a) => ({ url: a.url, filename: a.filename }))
+  };
 }
 
 async function fetchAllHistory(channelId: string) {
-  const all: Message[] = [];
+  const all: DiscordMessage[] = [];
   let before: string | undefined;
-
   while (true) {
     const q = new URLSearchParams({ limit: '100' });
     if (before) q.set('before', before);
-    const batch = await api<Message[]>(`/channels/${channelId}/messages?${q.toString()}`);
+    const batch = await api<DiscordMessage[]>(`/channels/${channelId}/messages?${q.toString()}`);
     if (!batch.length) break;
-
     all.push(...batch);
     before = batch[batch.length - 1]?.id;
-
-    if (env.initialBackfillLimit > 0 && all.length >= env.initialBackfillLimit) break;
     if (batch.length < 100) break;
   }
-
-  // API returns newest -> oldest; convert oldest -> newest
-  all.sort((a, b) => compareIds(a.id, b.id));
+  all.sort((a, b) => cmpSnowflake(a.id, b.id));
   return all;
 }
 
 async function fetchAfter(channelId: string, after: string) {
-  const out: Message[] = [];
+  const out: DiscordMessage[] = [];
   let nextAfter: string | undefined = after;
-
   while (true) {
     const q = new URLSearchParams({ limit: '100' });
     if (nextAfter) q.set('after', nextAfter);
-    const batch = await api<Message[]>(`/channels/${channelId}/messages?${q.toString()}`);
+    const batch = await api<DiscordMessage[]>(`/channels/${channelId}/messages?${q.toString()}`);
     if (!batch.length) break;
-
-    const sorted = [...batch].sort((a, b) => compareIds(a.id, b.id));
-    out.push(...sorted);
-    nextAfter = sorted.at(-1)?.id;
-
+    batch.sort((a, b) => cmpSnowflake(a.id, b.id));
+    out.push(...batch);
+    nextAfter = batch.at(-1)?.id;
     if (batch.length < 100) break;
   }
-
   return out;
 }
 
@@ -259,76 +169,97 @@ function chunk<T>(arr: T[], size: number): T[][] {
 }
 
 async function clearChannelPages(channelId: string) {
-  await fs.mkdir(DISCUSSIONS_DIR, { recursive: true });
-  const files = await fs.readdir(DISCUSSIONS_DIR);
-  const targets = files.filter((f) => f.startsWith(`${channelId}-p`) && f.endsWith('.md'));
-  await Promise.all(targets.map((f) => fs.unlink(path.join(DISCUSSIONS_DIR, f))));
+  const dir = path.join(DATA_DIR, channelId);
+  await fs.rm(dir, { recursive: true, force: true });
+  await fs.mkdir(dir, { recursive: true });
 }
 
-async function writeChannelPages(channel: Channel, messages: Message[]) {
-  const filtered = messages.filter((m) => m.type === 0 || (m.attachments && m.attachments.length > 0));
-  const pages = chunk(filtered, PAGE_SIZE);
+async function writeChannelPages(channel: Channel, messages: StoredMessage[]) {
+  const pages = chunk(messages, PAGE_SIZE);
   await clearChannelPages(channel.id);
 
   for (let i = 0; i < pages.length; i++) {
     const pageNumber = i + 1;
-    const fileName = `${channel.id}-p${String(pageNumber).padStart(5, '0')}-${slugify(channel.name)}.md`;
-    const doc = pageDoc(channel, pages[i], pageNumber, pages.length);
-    if (!doc) continue;
-    await fs.writeFile(path.join(DISCUSSIONS_DIR, fileName), doc, 'utf8');
+    const file = path.join(DATA_DIR, channel.id, `page-${String(pageNumber).padStart(5, '0')}.json`);
+    await fs.writeFile(file, JSON.stringify({
+      channelId: channel.id,
+      channelName: channel.name,
+      channelSlug: slugify(channel.name),
+      pageNumber,
+      totalPages: pages.length,
+      messages: pages[i]
+    }), 'utf8');
   }
 
   return pages.length;
 }
 
+async function writeIndex(items: Array<{ id: string; name: string; slug: string; totalMessages: number; totalPages: number }>) {
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  await fs.writeFile(path.join(DATA_DIR, 'index.json'), JSON.stringify(items, null, 2), 'utf8');
+}
+
 async function main() {
   const state = await readState();
-  await fs.mkdir(DISCUSSIONS_DIR, { recursive: true });
+  await fs.mkdir(DATA_DIR, { recursive: true });
 
   const channels = await api<Channel[]>(`/guilds/${env.guildId}/channels`);
   const included = channels.filter(isPublicChannel);
 
   console.log(`Channels detected: ${channels.length}, included as public: ${included.length}`);
 
+  const indexItems: Array<{ id: string; name: string; slug: string; totalMessages: number; totalPages: number }> = [];
+
   for (const channel of included) {
     try {
       const channelState = state.channels[channel.id] || {};
-      let existing = await loadChannelCache(channel.id);
-      let combined: Message[];
+      let allMessages: DiscordMessage[] = [];
 
-      if (!channelState.initialized || !existing.length) {
-        const full = await fetchAllHistory(channel.id);
-        combined = full;
-        console.log(`Backfilled #${channel.name}: ${full.length} messages`);
-      } else if (channelState.lastMessageId) {
-        const newer = await fetchAfter(channel.id, channelState.lastMessageId);
-        const map = new Map(existing.map((m) => [m.id, m]));
-        for (const m of newer) map.set(m.id, m);
-        combined = [...map.values()].sort((a, b) => compareIds(a.id, b.id));
-        console.log(`Incremental #${channel.name}: +${newer.length} messages`);
-      } else {
-        combined = existing;
+      const cachePath = path.join('.cache/channel-messages', `${channel.id}.json`);
+      try {
+        allMessages = JSON.parse(await fs.readFile(cachePath, 'utf8')) as DiscordMessage[];
+      } catch {
+        allMessages = [];
       }
 
-      if (!combined.length) continue;
+      if (!channelState.initialized || !allMessages.length) {
+        allMessages = await fetchAllHistory(channel.id);
+        console.log(`Backfilled #${channel.name}: ${allMessages.length} messages`);
+      } else if (channelState.lastMessageId) {
+        const newer = await fetchAfter(channel.id, channelState.lastMessageId);
+        const byId = new Map(allMessages.map((m) => [m.id, m]));
+        for (const m of newer) byId.set(m.id, m);
+        allMessages = [...byId.values()].sort((a, b) => cmpSnowflake(a.id, b.id));
+        console.log(`Incremental #${channel.name}: +${newer.length} messages`);
+      }
 
-      const lastMessageId = combined.at(-1)?.id;
-      if (!lastMessageId) continue;
+      const stored = allMessages
+        .filter((m) => m.type === 0 || (m.attachments && m.attachments.length > 0))
+        .map(toStoredMessage);
 
-      await saveChannelCache(channel.id, combined);
-      const pages = await writeChannelPages(channel, combined);
+      await fs.mkdir(path.dirname(cachePath), { recursive: true });
+      await fs.writeFile(cachePath, JSON.stringify(allMessages), 'utf8');
 
-      state.channels[channel.id] = {
-        initialized: true,
-        lastMessageId
-      };
+      const totalPages = await writeChannelPages(channel, stored);
+      const lastId = allMessages.at(-1)?.id;
+      if (lastId) state.channels[channel.id] = { initialized: true, lastMessageId: lastId };
 
-      console.log(`Built #${channel.name}: ${pages} pages of ${PAGE_SIZE}`);
+      indexItems.push({
+        id: channel.id,
+        name: channel.name,
+        slug: slugify(channel.name),
+        totalMessages: stored.length,
+        totalPages
+      });
+
+      console.log(`Built #${channel.name}: ${totalPages} pages`);
     } catch (err) {
       console.error(`Failed channel ${channel.name} (${channel.id})`, err);
     }
   }
 
+  indexItems.sort((a, b) => a.name.localeCompare(b.name));
+  await writeIndex(indexItems);
   await writeState(state);
   console.log('Sync complete');
 }
