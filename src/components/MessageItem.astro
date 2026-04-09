@@ -18,28 +18,33 @@ const isPdf = (name: string) => /\.pdf$/i.test(name);
 
   {message.attachments?.length ? (
     <div class="mt-2 space-y-3">
-      {message.attachments.map((a: { url: string; filename: string }) => (
-        <div>
-          {isImage(a.filename) ? (
-            <a href={a.url} target="_blank" rel="noreferrer">
-              <img src={a.url} alt={a.filename} loading="lazy" class="max-h-96 rounded-lg border border-line" />
-            </a>
-          ) : isVideo(a.filename) ? (
-            <video controls preload="metadata" class="w-full max-h-96 rounded-lg border border-line">
-              <source src={a.url} />
-            </video>
-          ) : isAudio(a.filename) ? (
-            <audio controls preload="none" class="w-full">
-              <source src={a.url} />
-            </audio>
-          ) : isPdf(a.filename) ? (
-            <iframe src={a.url} title={a.filename} class="w-full h-96 rounded-lg border border-line" loading="lazy"></iframe>
-          ) : null}
-          <div class="mt-1 text-sm">
-            <a href={a.url} target="_blank" rel="noreferrer">{a.filename}</a>
+      {message.attachments.map((a: { url: string; filename: string }) => {
+        const renderable = isImage(a.filename) || isVideo(a.filename) || isAudio(a.filename) || isPdf(a.filename);
+        return (
+          <div>
+            {isImage(a.filename) ? (
+              <a href={a.url} target="_blank" rel="noreferrer">
+                <img src={a.url} alt={a.filename} loading="lazy" class="max-h-96 rounded-lg border border-line" />
+              </a>
+            ) : isVideo(a.filename) ? (
+              <video controls preload="metadata" class="w-full max-h-96 rounded-lg border border-line">
+                <source src={a.url} />
+              </video>
+            ) : isAudio(a.filename) ? (
+              <audio controls preload="none" class="w-full">
+                <source src={a.url} />
+              </audio>
+            ) : isPdf(a.filename) ? (
+              <iframe src={a.url} title={a.filename} class="w-full h-96 rounded-lg border border-line" loading="lazy"></iframe>
+            ) : null}
+            {!renderable ? (
+              <div class="mt-1 text-sm">
+                <a href={a.url} target="_blank" rel="noreferrer">{a.filename}</a>
+              </div>
+            ) : null}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   ) : null}
 </div>
