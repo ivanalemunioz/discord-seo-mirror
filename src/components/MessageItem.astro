@@ -21,10 +21,10 @@ const isPdf = (name: string) => /\.pdf$/i.test(name);
       {message.attachments.map((a: { url: string; filename: string }) => {
         const renderable = isImage(a.filename) || isVideo(a.filename) || isAudio(a.filename) || isPdf(a.filename);
         return (
-          <div>
+          <div class="w-full lg:max-w-[50%]">
             {isImage(a.filename) ? (
               <a href={a.url} target="_blank" rel="noreferrer">
-                <img src={a.url} alt={a.filename} loading="lazy" class="max-h-96 rounded-lg border border-line" />
+                <img src={a.url} alt={a.filename} loading="lazy" class="w-full max-h-96 rounded-lg border border-line object-contain" />
               </a>
             ) : isVideo(a.filename) ? (
               <video controls preload="metadata" class="w-full max-h-96 rounded-lg border border-line">
