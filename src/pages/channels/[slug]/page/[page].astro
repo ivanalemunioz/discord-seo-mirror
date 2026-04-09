@@ -48,7 +48,7 @@ const newerHref = currentPage < totalPages ? `/channels/${slug}/page/${currentPa
     <article id="message-root" class="p-1 md:p-2 mt-4">
       <div class="mb-4 flex items-center justify-between">
         {olderHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={olderHref}>← Older messages</a> : <span class="text-muted text-sm">Oldest page</span>}
-        <span class="text-xs text-muted">Page {currentPage} / {totalPages}</span>
+        <span />
       </div>
 
       {entry && Content ? (

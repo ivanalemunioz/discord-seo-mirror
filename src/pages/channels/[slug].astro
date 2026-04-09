@@ -33,7 +33,7 @@ const { Content } = latest ? await render(latest) : { Content: null };
           {latest.data.pageNumber > 1
             ? <a class="text-sm text-blue-300 hover:text-blue-200" href={`/channels/${slug}/page/${latest.data.pageNumber - 1}`}>← Older messages</a>
             : <span class="text-muted text-sm">Start of channel history</span>}
-          <span class="text-xs text-muted">Page {latest.data.pageNumber} / {latest.data.totalPages}</span>
+          <span />
         </div>
 
         <div class="prose prose-invert max-w-none discord-message-stream">
