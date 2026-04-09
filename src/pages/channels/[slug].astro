@@ -35,8 +35,36 @@ const page = channel ? await getChannelPage(channel.id, latestPageNumber) : null
       </article>
 
       <script>
+        // @ts-nocheck
+        const focusMessage = (id) => {
+          if (!id) return;
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('message-focus-highlight');
+          setTimeout(() => el.classList.remove('message-focus-highlight'), 3000);
+        };
+
         requestAnimationFrame(() => {
-          window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' });
+          if (location.hash) {
+            focusMessage(location.hash.slice(1));
+          } else {
+            window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' });
+          }
+        });
+
+        document.addEventListener('click', (ev) => {
+          const a = ev.target instanceof Element ? ev.target.closest('a[href^="#m-"]') : null;
+          if (!a) return;
+          ev.preventDefault();
+          const id = a.getAttribute('href')?.slice(1);
+          if (!id) return;
+          history.replaceState(null, '', `#${id}`);
+          focusMessage(id);
+        });
+
+        window.addEventListener('hashchange', () => {
+          focusMessage(location.hash.slice(1));
         });
       </script>
     </section>
