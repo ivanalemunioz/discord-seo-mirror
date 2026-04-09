@@ -10,50 +10,54 @@ const isAudio = (name: string) => /\.(mp3|wav|ogg|m4a)$/i.test(name);
 const isPdf = (name: string) => /\.pdf$/i.test(name);
 ---
 
-<div id={`m-${message.id}`} class="message-row py-3 border-b border-line/40 last:border-b-0">
-  {message.replyTo ? (
-    <a href={`#m-${message.replyTo.id}`} class="mb-1 flex items-center gap-2 text-xs text-muted hover:text-slate-300 min-w-0">
-      <span class="inline-block h-3 w-5 shrink-0 border-l-2 border-t-2 border-line/80 rounded-tl-md -mb-3 -mr-1" />
-      <span class="truncate min-w-0">
-        <span class="font-semibold text-slate-300">{message.replyTo.author || 'message'}</span>
-        {message.replyTo.content ? <span class="ml-1">{message.replyTo.content}</span> : null}
-      </span>
-    </a>
-  ) : null}
-  <div class="text-sm font-semibold text-slate-200">{message.author} <span class="text-xs text-muted font-normal">{new Date(message.timestamp).toISOString()}</span></div>
-  {message.content ? (
-    <div class="mt-1 prose prose-invert max-w-none discord-message-stream" set:html={html} />
-  ) : null}
+<div id={`m-${message.id}`} class="message-row border-b border-line/40 last:border-b-0">
+  <div class="message-inner py-3">
+    {message.replyTo ? (
+      <a href={`#m-${message.replyTo.id}`} class="mb-1 flex items-center gap-2 text-xs text-muted hover:text-slate-300 min-w-0">
+        <span class="inline-block h-3 w-5 shrink-0 border-l-2 border-t-2 border-line/80 rounded-tl-md -mb-3 -mr-1" />
+        <span class="truncate min-w-0">
+          <span class="font-semibold text-slate-300">{message.replyTo.author || 'message'}</span>
+          {message.replyTo.content ? <span class="ml-1">{message.replyTo.content}</span> : null}
+        </span>
+      </a>
+    ) : null}
 
-  {message.attachments?.length ? (
-    <div class="mt-2 space-y-3">
-      {message.attachments.map((a: { url: string; filename: string }) => {
-        const renderable = isImage(a.filename) || isVideo(a.filename) || isAudio(a.filename) || isPdf(a.filename);
-        return (
-          <div class="w-full lg:max-w-[50%]">
-            {isImage(a.filename) ? (
-              <a href={a.url} target="_blank" rel="noreferrer">
-                <img src={a.url} alt={a.filename} loading="lazy" class="w-full max-h-96 rounded-lg border border-line object-contain" />
-              </a>
-            ) : isVideo(a.filename) ? (
-              <video controls preload="metadata" class="w-full max-h-96 rounded-lg border border-line">
-                <source src={a.url} />
-              </video>
-            ) : isAudio(a.filename) ? (
-              <audio controls preload="none" class="w-full">
-                <source src={a.url} />
-              </audio>
-            ) : isPdf(a.filename) ? (
-              <iframe src={a.url} title={a.filename} class="w-full h-96 rounded-lg border border-line" loading="lazy"></iframe>
-            ) : null}
-            {!renderable ? (
-              <div class="mt-1 text-sm">
-                <a href={a.url} target="_blank" rel="noreferrer">{a.filename}</a>
-              </div>
-            ) : null}
-          </div>
-        );
-      })}
-    </div>
-  ) : null}
+    <div class="text-sm font-semibold text-slate-200">{message.author} <span class="text-xs text-muted font-normal">{new Date(message.timestamp).toISOString()}</span></div>
+
+    {message.content ? (
+      <div class="mt-1 prose prose-invert max-w-none discord-message-stream" set:html={html} />
+    ) : null}
+
+    {message.attachments?.length ? (
+      <div class="mt-2 space-y-3">
+        {message.attachments.map((a: { url: string; filename: string }) => {
+          const renderable = isImage(a.filename) || isVideo(a.filename) || isAudio(a.filename) || isPdf(a.filename);
+          return (
+            <div class="w-full lg:max-w-[50%]">
+              {isImage(a.filename) ? (
+                <a href={a.url} target="_blank" rel="noreferrer">
+                  <img src={a.url} alt={a.filename} loading="lazy" class="w-full max-h-96 rounded-lg border border-line object-contain" />
+                </a>
+              ) : isVideo(a.filename) ? (
+                <video controls preload="metadata" class="w-full max-h-96 rounded-lg border border-line">
+                  <source src={a.url} />
+                </video>
+              ) : isAudio(a.filename) ? (
+                <audio controls preload="none" class="w-full">
+                  <source src={a.url} />
+                </audio>
+              ) : isPdf(a.filename) ? (
+                <iframe src={a.url} title={a.filename} class="w-full h-96 rounded-lg border border-line" loading="lazy"></iframe>
+              ) : null}
+              {!renderable ? (
+                <div class="mt-1 text-sm">
+                  <a href={a.url} target="_blank" rel="noreferrer">{a.filename}</a>
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    ) : null}
+  </div>
 </div>
