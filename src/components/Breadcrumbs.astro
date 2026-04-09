@@ -1,0 +1,13 @@
+---
+interface Crumb { label: string; href?: string }
+const { items } = Astro.props as { items: Crumb[] };
+---
+
+<nav class="text-sm text-muted mb-4">
+  {items.map((item, idx) => (
+    <span>
+      {item.href ? <a href={item.href} class="hover:text-text">{item.label}</a> : <span class="text-text">{item.label}</span>}
+      {idx < items.length - 1 && <span class="px-2">/</span>}
+    </span>
+  ))}
+</nav>

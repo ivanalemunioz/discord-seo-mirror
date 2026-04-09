@@ -1,0 +1,35 @@
+---
+import MainLayout from '@/layouts/MainLayout.astro';
+import { getChannelNav } from '@/lib/content';
+const channels = await getChannelNav();
+---
+<MainLayout title="Search" channels={channels}>
+  <h1 class="text-2xl font-semibold">Search discussions</h1>
+  <input id="q" type="search" placeholder="Search by title, excerpt, channel..." class="mt-4 w-full max-w-xl bg-surface border border-line rounded-md px-3 py-2" />
+  <div id="results" class="mt-6 grid gap-4"></div>
+
+  <script>
+    // @ts-nocheck
+    const input = document.getElementById('q');
+    const results = document.getElementById('results');
+    const data = await fetch('/api/search.json').then((r) => r.json());
+
+    const render = (items) => {
+      results.innerHTML = items.slice(0, 50).map((item) => `
+        <a href="/community/${item.slug}" class="card p-4 block hover:border-blurple transition-colors">
+          <div class="font-semibold">${item.title}</div>
+          <div class="text-sm text-muted mt-1">#${item.channel}</div>
+          <div class="text-sm mt-2 text-slate-300">${item.excerpt ?? ''}</div>
+        </a>
+      `).join('');
+    }
+
+    render(data);
+    input.addEventListener('input', () => {
+      const q = input.value.trim().toLowerCase();
+      if (!q) return render(data);
+      const filtered = data.filter((d) => [d.title, d.channel, d.excerpt].join(' ').toLowerCase().includes(q));
+      render(filtered);
+    });
+  </script>
+</MainLayout>

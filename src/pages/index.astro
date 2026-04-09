@@ -1,0 +1,22 @@
+---
+import MainLayout from '@/layouts/MainLayout.astro';
+import DiscussionCard from '@/components/DiscussionCard.astro';
+import { Button } from '@/components/ui/button';
+import { getDiscussions, getChannelNav } from '@/lib/content';
+
+const discussions = await getDiscussions();
+const channels = await getChannelNav();
+const latest = discussions.slice(0, 20);
+---
+
+<MainLayout title="Discord SEO Mirror" description="Search-indexable mirror of public Discord discussions" channels={channels}>
+  <h1 class="text-3xl font-bold">Public Discord discussions</h1>
+  <p class="text-muted mt-2">Daily-synced archive of public-by-default channels and threads.</p>
+  <div class="mt-4 flex gap-2">
+    <a href="/search"><Button variant="default">Search archive</Button></a>
+    <a href="/channels"><Button variant="outline">Browse channels</Button></a>
+  </div>
+  <section class="grid gap-4 mt-6">
+    {latest.map((item) => <DiscussionCard item={item} />)}
+  </section>
+</MainLayout>

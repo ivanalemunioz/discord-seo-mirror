@@ -1,0 +1,50 @@
+---
+import '@/styles/global.css';
+import type { NavChannel } from '@/lib/types';
+
+interface Props {
+  title: string;
+  description?: string;
+  channels?: NavChannel[];
+}
+
+const { title, description = 'Public Discord discussions mirrored for search.', channels = [] } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical.toString()} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical.toString()} />
+  </head>
+  <body>
+    <div class="min-h-screen grid lg:grid-cols-[280px_1fr]">
+      <aside class="border-r border-line bg-surface p-4 hidden lg:block sticky top-0 h-screen overflow-y-auto">
+        <a href="/" class="font-semibold text-lg">Discord SEO Mirror</a>
+        <p class="text-muted text-sm mt-1">Public community archive</p>
+        <nav class="mt-6 space-y-1">
+          <a class="channel-row" href="/">Home</a>
+          <a class="channel-row" href="/latest">Latest</a>
+          <a class="channel-row" href="/channels">Channels</a>
+          {channels.map((channel) => (
+            <a class="channel-row" href={`/channels/${channel.slug}`}>
+              <span># {channel.name}</span>
+              <span class="ml-auto text-xs">{channel.count}</span>
+            </a>
+          ))}
+        </nav>
+      </aside>
+      <main class="p-4 lg:p-8">
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>

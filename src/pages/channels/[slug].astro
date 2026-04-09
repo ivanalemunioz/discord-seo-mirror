@@ -1,0 +1,23 @@
+---
+import MainLayout from '@/layouts/MainLayout.astro';
+import DiscussionCard from '@/components/DiscussionCard.astro';
+import Breadcrumbs from '@/components/Breadcrumbs.astro';
+import { getDiscussions, getChannelNav } from '@/lib/content';
+
+export async function getStaticPaths() {
+  const channels = await getChannelNav();
+  return channels.map((c) => ({ params: { slug: c.slug } }));
+}
+
+const { slug } = Astro.params;
+const channels = await getChannelNav();
+const channel = channels.find((c) => c.slug === slug);
+const discussions = (await getDiscussions()).filter((d) => d.data.channelId === channel?.id);
+---
+<MainLayout title={`#${channel?.name ?? slug}`} channels={channels}>
+  <Breadcrumbs items={[{ label: 'Channels', href: '/channels' }, { label: `#${channel?.name ?? slug}` }]} />
+  <h1 class="text-2xl font-semibold"># {channel?.name}</h1>
+  <div class="grid gap-4 mt-6">
+    {discussions.map((item) => <DiscussionCard item={item} />)}
+  </div>
+</MainLayout>
