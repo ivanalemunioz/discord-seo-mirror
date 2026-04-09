@@ -1,0 +1,49 @@
+---
+import MainLayout from '@/layouts/MainLayout.astro';
+import DiscussionCard from '@/components/DiscussionCard.astro';
+import Breadcrumbs from '@/components/Breadcrumbs.astro';
+import { getDiscussions, getChannelNav } from '@/lib/content';
+
+const PAGE_SIZE = 10;
+
+export async function getStaticPaths() {
+  const channels = await getChannelNav();
+  const discussions = await getDiscussions();
+
+  const paths: { params: { slug: string; page: string } }[] = [];
+  for (const channel of channels) {
+    const count = discussions.filter((d) => d.data.channelId === channel.id).length;
+    const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
+    for (let page = 1; page <= totalPages; page++) {
+      paths.push({ params: { slug: channel.slug, page: String(page) } });
+    }
+  }
+  return paths;
+}
+
+const { slug, page } = Astro.params;
+const currentPage = Number(page || '1');
+const channels = await getChannelNav();
+const channel = channels.find((c) => c.slug === slug);
+const allChannelItems = (await getDiscussions()).filter((d) => d.data.channelId === channel?.id);
+const totalPages = Math.max(1, Math.ceil(allChannelItems.length / PAGE_SIZE));
+const start = (currentPage - 1) * PAGE_SIZE;
+const paged = allChannelItems.slice(start, start + PAGE_SIZE);
+
+const newerHref = currentPage > 1 ? `/channels/${slug}/page/${currentPage - 1}` : null;
+const olderHref = currentPage < totalPages ? `/channels/${slug}/page/${currentPage + 1}` : null;
+---
+<MainLayout title={`#${channel?.name ?? slug} · Page ${currentPage}`} channels={channels}>
+  <Breadcrumbs items={[{ label: 'Channels', href: '/channels' }, { label: `#${channel?.name ?? slug}`, href: `/channels/${slug}` }, { label: `Page ${currentPage}` }]} />
+  <h1 class="text-2xl font-semibold"># {channel?.name}</h1>
+  <p class="text-sm text-muted mt-2">Newest message batches first. Page {currentPage} of {totalPages}.</p>
+
+  <div class="grid gap-4 mt-6">
+    {paged.map((item) => <DiscussionCard item={item} />)}
+  </div>
+
+  <nav class="mt-8 flex items-center justify-between">
+    {newerHref ? <a class="channel-row" href={newerHref}>← Newer messages</a> : <span class="text-muted text-sm">&nbsp;</span>}
+    {olderHref ? <a class="channel-row" href={olderHref}>Older messages →</a> : <span class="text-muted text-sm">No older pages</span>}
+  </nav>
+</MainLayout>
