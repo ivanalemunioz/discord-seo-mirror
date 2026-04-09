@@ -150,9 +150,26 @@ function clean(text: string) {
     .trim();
 }
 
+function normalizeMarkdown(text: string) {
+  const lines = text.split('\n').map((line) => {
+    const trimmed = line.trim();
+    // keep proper fence lines (``` or ```lang)
+    if (trimmed.startsWith('```')) return line;
+    // escape malformed inline fences that break markdown parsing
+    if (line.includes('```')) return line.replace(/```/g, '\\`\\`\\`');
+    return line;
+  });
+
+  const fenceCount = lines.filter((l) => l.trim().startsWith('```')).length;
+  if (fenceCount % 2 !== 0) lines.push('```');
+
+  return lines.join('\n');
+}
+
 function messageToBlock(m: Message) {
   const who = m.author?.global_name || m.author?.username || 'unknown';
-  const line = clean(m.content || '');
+  const raw = clean(m.content || '');
+  const line = normalizeMarkdown(raw);
   const at = new Date(m.timestamp).toISOString();
   const atts = (m.attachments || []).map((a) => `- Attachment: [${a.filename}](${a.url})`).join('\n');
   return `### ${who} · ${at}\n\n${line || '_attachment_'}\n${atts}`.trim();
