@@ -8,5 +8,10 @@ export default defineConfig({
   integrations: [tailwind(), sitemap(), react()],
   markdown: {
     shikiConfig: { theme: 'github-dark' }
+  },
+  vite: {
+    server: {
+      allowedHosts: true
+    }
   }
 });
