@@ -13,7 +13,11 @@ const discussions = defineCollection({
     publishedAt: z.coerce.date(),
     updatedAt: z.coerce.date(),
     tags: z.array(z.string()).default([]),
-    excerpt: z.string().default('')
+    excerpt: z.string().default(''),
+    pageNumber: z.number().int().positive().default(1),
+    totalPages: z.number().int().positive().default(1),
+    firstMessageId: z.string().optional(),
+    lastMessageId: z.string().optional()
   })
 });
 
