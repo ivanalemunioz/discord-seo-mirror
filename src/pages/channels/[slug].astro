@@ -28,7 +28,7 @@ const { Content } = latest ? await render(latest) : { Content: null };
         <h1 class="text-xl md:text-2xl font-semibold"># {channel?.name}</h1>
       </header>
 
-      <article class="card p-4 md:p-6 mt-4">
+      <article id="message-root" class="card p-4 md:p-6 mt-4">
         <div class="mb-4 flex items-center justify-between">
           {latest.data.pageNumber > 1
             ? <a class="channel-row" href={`/channels/${slug}/page/${latest.data.pageNumber - 1}`}>← Older messages</a>
@@ -45,6 +45,12 @@ const { Content } = latest ? await render(latest) : { Content: null };
           <a class="channel-row" href={`/community/${latest.slug}`}>Permalink page ↗</a>
         </div>
       </article>
+
+      <script>
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' });
+        });
+      </script>
     </section>
   ) : (
     <p class="text-muted mt-4">No messages synced yet for this channel.</p>

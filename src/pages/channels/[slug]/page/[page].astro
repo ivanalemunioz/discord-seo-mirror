@@ -45,7 +45,7 @@ const newerHref = currentPage < totalPages ? `/channels/${slug}/page/${currentPa
       <h1 class="text-xl md:text-2xl font-semibold"># {channel?.name}</h1>
     </header>
 
-    <article class="card p-4 md:p-6 mt-4">
+    <article id="message-root" class="card p-4 md:p-6 mt-4">
       <div class="mb-4 flex items-center justify-between">
         {olderHref ? <a class="channel-row" href={olderHref}>← Older messages</a> : <span class="text-muted text-sm">Oldest page</span>}
         <span class="text-xs text-muted">Page {currentPage} / {totalPages}</span>
@@ -64,5 +64,11 @@ const newerHref = currentPage < totalPages ? `/channels/${slug}/page/${currentPa
         {entry ? <a class="channel-row" href={`/community/${entry.slug}`}>Permalink page ↗</a> : <span />}
       </div>
     </article>
+
+    <script>
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' });
+      });
+    </script>
   </section>
 </MainLayout>
