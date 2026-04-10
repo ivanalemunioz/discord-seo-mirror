@@ -34,6 +34,12 @@ type DiscordMessage = {
     message_count?: number;
     total_message_sent?: number;
   };
+  embeds?: Array<{
+    title?: string;
+    description?: string;
+    url?: string;
+    fields?: Array<{ name?: string; value?: string }>;
+  }>;
 };
 
 type StoredMessage = {
@@ -152,17 +158,44 @@ function cleanContent(text: string) {
     .trim();
 }
 
+function extractEmbedText(m: DiscordMessage) {
+  const blocks: string[] = [];
+  for (const e of m.embeds || []) {
+    if (e.title) blocks.push(`**${cleanContent(e.title)}**`);
+    if (e.description) blocks.push(cleanContent(e.description));
+    if (e.fields?.length) {
+      for (const f of e.fields) {
+        const n = cleanContent(f.name || '');
+        const v = cleanContent(f.value || '');
+        if (n || v) blocks.push(`${n ? `**${n}:** ` : ''}${v}`.trim());
+      }
+    }
+    if (e.url) blocks.push(e.url);
+  }
+  return blocks.join('\n\n').trim();
+}
+
+function hasVisibleContent(m: DiscordMessage) {
+  return Boolean(
+    cleanContent(m.content || '') ||
+    (m.attachments && m.attachments.length > 0) ||
+    extractEmbedText(m)
+  );
+}
+
 function toStoredMessage(m: DiscordMessage, threads: Map<string, ThreadSummary>): StoredMessage {
   const replyId = m.message_reference?.message_id || m.referenced_message?.id;
   const threadId = m.thread?.id;
   const threadSummary = threadId ? threads.get(threadId) : undefined;
+
+  const content = cleanContent(m.content || '') || extractEmbedText(m);
 
   return {
     id: m.id,
     author: m.author?.global_name || m.author?.username || 'unknown',
     timestamp: m.timestamp,
     editedAt: m.edited_timestamp,
-    content: cleanContent(m.content || ''),
+    content,
     attachments: (m.attachments || []).map((a) => ({ url: a.url, filename: a.filename })),
     replyTo: replyId
       ? {
@@ -298,13 +331,13 @@ async function main() {
         try {
           const threadMsgs = await fetchAllHistory(threadId);
           const threadStored = threadMsgs
-            .filter((m) => m.type === 0 || (m.attachments && m.attachments.length > 0))
+            .filter((m) => hasVisibleContent(m))
             .map((m) => ({
               id: m.id,
               author: m.author?.global_name || m.author?.username || 'unknown',
               timestamp: m.timestamp,
               editedAt: m.edited_timestamp,
-              content: cleanContent(m.content || ''),
+              content: cleanContent(m.content || '') || extractEmbedText(m),
               attachments: (m.attachments || []).map((a) => ({ url: a.url, filename: a.filename }))
             }));
 
@@ -332,7 +365,7 @@ async function main() {
       }
 
       const stored = allMessages
-        .filter((m) => m.type === 0 || (m.attachments && m.attachments.length > 0))
+        .filter((m) => hasVisibleContent(m))
         .map((m) => toStoredMessage(m, threadMap));
 
       await fs.mkdir(path.dirname(cachePath), { recursive: true });
