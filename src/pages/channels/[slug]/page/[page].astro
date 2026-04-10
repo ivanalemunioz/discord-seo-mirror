@@ -34,16 +34,14 @@ const newerHref = channel && currentPage < channel.totalPages ? `/channels/${slu
     </header>
 
     <article id="message-root" class="mt-24">
-      <div class="mb-4 flex items-center justify-between">
-        {olderHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={olderHref}>← Older messages</a> : <span class="text-muted text-sm">Oldest page</span>}
-        <span />
+      <div class="mb-4 flex items-center justify-center">
+        {olderHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={olderHref}>↑ Older messages</a> : <span class="text-muted text-sm">Oldest page</span>}
       </div>
 
       {pageData ? pageData.messages.map((m) => <MessageItem message={m} />) : <p class="text-muted">This page does not exist yet.</p>}
 
-      <div class="mt-6 flex items-center justify-between">
-        {newerHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={newerHref}>Newest messages →</a> : <span class="text-muted text-sm">Already newest page</span>}
-        <span />
+      <div class="mt-6 flex items-center justify-center">
+        {newerHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={newerHref}>Newest messages ↓</a> : <span class="text-muted text-sm">Already newest messasge</span>}
       </div>
     </article>
 
