@@ -41,7 +41,7 @@ const newerHref = channel && currentPage < channel.totalPages ? `/channels/${slu
       {pageData ? pageData.messages.map((m) => <MessageItem message={m} />) : <p class="text-muted">This page does not exist yet.</p>}
 
       <div class="mt-6 flex items-center justify-center">
-        {newerHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={newerHref}>Newest messages ↓</a> : <span class="text-muted text-sm">Already newest messasge</span>}
+        {newerHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={newerHref}>Newest messages ↓</a> : <span class="text-muted text-sm">Already newest message</span>}
       </div>
     </article>
 
