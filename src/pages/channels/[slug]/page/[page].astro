@@ -27,7 +27,7 @@ const olderHref = currentPage > 1 ? `/channels/${slug}/page/${currentPage - 1}` 
 const newerHref = channel && currentPage < channel.totalPages ? `/channels/${slug}/page/${currentPage + 1}` : null;
 ---
 <MainLayout title={`#${channel?.name ?? slug}`} channels={channels}>
-  <section class="-mx-4 lg:-mx-8">
+  <section>
     <header class="fixed top-0 left-0 right-0 lg:left-[280px] z-20 bg-background/95 backdrop-blur border-b border-line pb-3 px-4 lg:px-8 pt-4">
       <Breadcrumbs items={[{ label: 'Channels', href: '/channels' }, { label: `#${channel?.name ?? slug}`, href: `/channels/${slug}` }]} />
       <h1 class="text-xl md:text-2xl font-semibold"># {channel?.name}</h1>
