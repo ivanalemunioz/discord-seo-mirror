@@ -10,7 +10,7 @@ const isAudio = (name: string) => /\.(mp3|wav|ogg|m4a)$/i.test(name);
 const isPdf = (name: string) => /\.pdf$/i.test(name);
 ---
 
-<div id={`m-${message.id}`} class="message-row border-b border-line/40 last:border-b-0">
+<div id={`m-${message.id}`} class="message-row -mx-2 border-b border-line/40 last:border-b-0">
   <div class="message-inner py-3">
     {message.replyTo ? (
       <a href={`#m-${message.replyTo.id}`} class="mb-1 flex items-center gap-2 text-xs text-muted hover:text-slate-300 min-w-0">
