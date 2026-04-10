@@ -1,0 +1,45 @@
+---
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import MainLayout from '@/layouts/MainLayout.astro';
+import Breadcrumbs from '@/components/Breadcrumbs.astro';
+import MessageItem from '@/components/MessageItem.astro';
+import { getChannelNav, getThreadById } from '@/lib/content';
+
+const THREADS_DIR = path.resolve('src/data/threads');
+
+export async function getStaticPaths() {
+  let files: string[] = [];
+  try {
+    files = (await fs.readdir(THREADS_DIR)).filter((f) => f.endsWith('.json'));
+  } catch {
+    files = [];
+  }
+  return files.map((f) => ({ params: { id: f.replace(/\.json$/, '') } }));
+}
+
+const { id } = Astro.params;
+const channels = await getChannelNav();
+const thread = id ? await getThreadById(id) : null;
+const parent = channels.find((c) => c.id === thread?.parentChannelId);
+---
+<MainLayout title={thread ? `Thread · ${thread.name}` : 'Thread'} channels={channels}>
+  {thread ? (
+    <section>
+      <header class="fixed top-0 left-0 right-0 lg:left-[280px] z-20 bg-background/95 backdrop-blur border-b border-line pb-3 px-4 lg:px-8 pt-4">
+        <Breadcrumbs items={[
+          { label: 'Channels', href: '/channels' },
+          { label: `#${parent?.name ?? 'channel'}`, href: parent ? `/channels/${parent.slug}` : '/channels' },
+          { label: thread.name }
+        ]} />
+        <h1 class="text-xl md:text-2xl font-semibold">{thread.name}</h1>
+      </header>
+
+      <article id="message-root" class="mt-24">
+        {thread.messages.map((m) => <MessageItem message={m} />)}
+      </article>
+    </section>
+  ) : (
+    <p class="text-muted mt-4">Thread not found.</p>
+  )}
+</MainLayout>

@@ -3,6 +3,7 @@ import path from 'node:path';
 
 const API = 'https://discord.com/api/v10';
 const DATA_DIR = path.resolve('src/data/channels');
+const THREADS_DIR = path.resolve('src/data/threads');
 const STATE_FILE = path.resolve('.cache/sync-state.json');
 const PAGE_SIZE = 100;
 
@@ -27,6 +28,12 @@ type DiscordMessage = {
     content?: string;
     author?: { username?: string; global_name?: string };
   } | null;
+  thread?: {
+    id: string;
+    name?: string;
+    message_count?: number;
+    total_message_sent?: number;
+  };
 };
 
 type StoredMessage = {
@@ -41,6 +48,21 @@ type StoredMessage = {
     author?: string;
     content?: string;
   };
+  thread?: {
+    id: string;
+    name: string;
+    messageCount: number;
+    lastMessageAt?: string;
+    preview?: string;
+  };
+};
+
+type ThreadSummary = {
+  id: string;
+  name: string;
+  messageCount: number;
+  lastMessageAt?: string;
+  preview?: string;
 };
 
 type ChannelState = { initialized?: boolean; lastMessageId?: string };
@@ -130,8 +152,11 @@ function cleanContent(text: string) {
     .trim();
 }
 
-function toStoredMessage(m: DiscordMessage): StoredMessage {
+function toStoredMessage(m: DiscordMessage, threads: Map<string, ThreadSummary>): StoredMessage {
   const replyId = m.message_reference?.message_id || m.referenced_message?.id;
+  const threadId = m.thread?.id;
+  const threadSummary = threadId ? threads.get(threadId) : undefined;
+
   return {
     id: m.id,
     author: m.author?.global_name || m.author?.username || 'unknown',
@@ -144,6 +169,15 @@ function toStoredMessage(m: DiscordMessage): StoredMessage {
           id: replyId,
           author: m.referenced_message?.author?.global_name || m.referenced_message?.author?.username,
           content: cleanContent(m.referenced_message?.content || '').slice(0, 160)
+        }
+      : undefined,
+    thread: threadSummary
+      ? {
+          id: threadSummary.id,
+          name: threadSummary.name,
+          messageCount: threadSummary.messageCount,
+          lastMessageAt: threadSummary.lastMessageAt,
+          preview: threadSummary.preview
         }
       : undefined
   };
@@ -218,6 +252,11 @@ async function writeIndex(items: Array<{ id: string; name: string; slug: string;
   await fs.writeFile(path.join(DATA_DIR, 'index.json'), JSON.stringify(items, null, 2), 'utf8');
 }
 
+async function writeThread(threadId: string, payload: { id: string; name: string; parentChannelId: string; messages: StoredMessage[] }) {
+  await fs.mkdir(THREADS_DIR, { recursive: true });
+  await fs.writeFile(path.join(THREADS_DIR, `${threadId}.json`), JSON.stringify(payload), 'utf8');
+}
+
 async function main() {
   const state = await readState();
   await fs.mkdir(DATA_DIR, { recursive: true });
@@ -252,9 +291,49 @@ async function main() {
         console.log(`Incremental #${channel.name}: +${newer.length} messages`);
       }
 
+      const threadIds = [...new Set(allMessages.map((m) => m.thread?.id).filter(Boolean))] as string[];
+      const threadMap = new Map<string, ThreadSummary>();
+
+      for (const threadId of threadIds) {
+        try {
+          const threadMsgs = await fetchAllHistory(threadId);
+          const threadStored = threadMsgs
+            .filter((m) => m.type === 0 || (m.attachments && m.attachments.length > 0))
+            .map((m) => ({
+              id: m.id,
+              author: m.author?.global_name || m.author?.username || 'unknown',
+              timestamp: m.timestamp,
+              editedAt: m.edited_timestamp,
+              content: cleanContent(m.content || ''),
+              attachments: (m.attachments || []).map((a) => ({ url: a.url, filename: a.filename }))
+            }));
+
+          const starter = allMessages.find((m) => m.thread?.id === threadId);
+          const name = starter?.thread?.name || `Thread ${threadId}`;
+          const last = threadStored.at(-1);
+
+          await writeThread(threadId, {
+            id: threadId,
+            name,
+            parentChannelId: channel.id,
+            messages: threadStored
+          });
+
+          threadMap.set(threadId, {
+            id: threadId,
+            name,
+            messageCount: threadStored.length,
+            lastMessageAt: last?.timestamp,
+            preview: last?.content?.slice(0, 120)
+          });
+        } catch (err) {
+          console.warn(`Thread fetch failed ${threadId}`, err);
+        }
+      }
+
       const stored = allMessages
         .filter((m) => m.type === 0 || (m.attachments && m.attachments.length > 0))
-        .map(toStoredMessage);
+        .map((m) => toStoredMessage(m, threadMap));
 
       await fs.mkdir(path.dirname(cachePath), { recursive: true });
       await fs.writeFile(cachePath, JSON.stringify(allMessages), 'utf8');

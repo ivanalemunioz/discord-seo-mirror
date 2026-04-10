@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const DATA_DIR = path.resolve('src/data/channels');
+const THREADS_DIR = path.resolve('src/data/threads');
 
 type ChannelIndex = {
   id: string;
@@ -92,6 +93,30 @@ export async function getChannelPage(channelId: string, pageNumber: number) {
         author?: string;
         content?: string;
       };
+      thread?: {
+        id: string;
+        name: string;
+        messageCount: number;
+        lastMessageAt?: string;
+        preview?: string;
+      };
+    }>;
+  };
+}
+
+export async function getThreadById(threadId: string) {
+  const file = path.join(THREADS_DIR, `${threadId}.json`);
+  return JSON.parse(await fs.readFile(file, 'utf8')) as {
+    id: string;
+    name: string;
+    parentChannelId: string;
+    messages: Array<{
+      id: string;
+      author: string;
+      timestamp: string;
+      editedAt?: string | null;
+      content: string;
+      attachments: Array<{ url: string; filename: string }>;
     }>;
   };
 }

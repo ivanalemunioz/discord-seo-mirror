@@ -28,6 +28,13 @@ const isPdf = (name: string) => /\.pdf$/i.test(name);
       <div class="mt-1 prose prose-invert max-w-none discord-message-stream" set:html={html} />
     ) : null}
 
+    {message.thread ? (
+      <a href={`/threads/${message.thread.id}`} class="mt-2 block max-w-lg rounded-md bg-panel border border-line px-3 py-2 hover:border-blurple transition-colors">
+        <div class="text-sm font-semibold text-slate-200">{message.thread.name} <span class="text-blue-300">›</span></div>
+        <div class="text-xs text-muted mt-1">{message.thread.messageCount} messages{message.thread.preview ? ` · ${message.thread.preview}` : ''}</div>
+      </a>
+    ) : null}
+
     {message.attachments?.length ? (
       <div class="mt-2 space-y-3">
         {message.attachments.map((a: { url: string; filename: string }) => {
