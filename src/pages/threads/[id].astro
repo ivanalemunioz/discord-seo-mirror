@@ -1,21 +1,12 @@
 ---
-import fs from 'node:fs/promises';
-import path from 'node:path';
 import MainLayout from '@/layouts/MainLayout.astro';
 import Breadcrumbs from '@/components/Breadcrumbs.astro';
 import MessageItem from '@/components/MessageItem.astro';
 import { getChannelNav, getThreadById } from '@/lib/content';
 
-const THREADS_DIR = path.resolve('src/data/threads');
-
 export async function getStaticPaths() {
-  let files: string[] = [];
-  try {
-    files = (await fs.readdir(THREADS_DIR)).filter((f) => f.endsWith('.json'));
-  } catch {
-    files = [];
-  }
-  return files.map((f) => ({ params: { id: f.replace(/\.json$/, '') } }));
+  const files = Object.keys(import.meta.glob('/src/data/threads/*.json'));
+  return files.map((f) => ({ params: { id: f.split('/').pop()?.replace(/\.json$/, '') || '' } }));
 }
 
 const { id } = Astro.params;
