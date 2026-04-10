@@ -12,25 +12,29 @@ export async function getStaticPaths() {
 const { slug } = Astro.params;
 const channels = await getChannelNav();
 const channel = channels.find((c) => c.slug === slug);
-const latestPageNumber = channel?.totalPages || 1;
-const page = channel ? await getChannelPage(channel.id, latestPageNumber) : null;
+const currentPage = channel?.totalPages || 1;
+const pageData = channel ? await getChannelPage(channel.id, currentPage) : null;
+
+const olderHref = currentPage > 1 ? `/channels/${slug}/page/${currentPage - 1}` : null;
 ---
 <MainLayout title={`#${channel?.name ?? slug}`} channels={channels}>
-  {channel && page ? (
+  {channel && pageData ? (
     <section>
       <header class="fixed top-0 left-0 right-0 lg:left-[280px] z-20 bg-background/95 backdrop-blur border-b border-line pb-3 px-4 lg:px-8 pt-4">
-        <Breadcrumbs items={[{ label: 'Channels', href: '/channels' }, { label: `#${channel.name}` }]} />
+        <Breadcrumbs items={[{ label: 'Channels', href: '/channels' }, { label: `#${channel.name}`, href: `/channels/${slug}` }]} />
         <h1 class="text-xl md:text-2xl font-semibold"># {channel.name}</h1>
       </header>
 
       <article id="message-root" class="mt-24">
         <div class="mb-4 flex items-center justify-center">
-          {page.pageNumber > 1
-            ? <a class="text-sm text-blue-300 hover:text-blue-200" href={`/channels/${slug}/page/${page.pageNumber - 1}`}>↑ Older messages</a>
-            : <span class="text-muted text-sm">Start of channel history</span>}
+          {olderHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={olderHref}>↑ Older messages</a> : <span class="text-muted text-sm">Oldest page</span>}
         </div>
 
-        {page.messages.map((m) => <MessageItem message={m} />)}
+        {pageData.messages.map((m) => <MessageItem message={m} />)}
+
+        <div class="mt-6 flex items-center justify-center">
+          <span class="text-muted text-sm">Already newest message</span>
+        </div>
       </article>
 
       <script>
