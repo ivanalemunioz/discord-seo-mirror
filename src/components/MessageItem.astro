@@ -13,21 +13,13 @@ const isPdf = (name: string) => /\.pdf$/i.test(name);
 ---
 
 <div id={`m-${message.id}`} class="message-row border-b border-line/40 last:border-b-0">
-  <div class="message-inner py-3 flex gap-3">
-    <div class="w-10 shrink-0">
-      {showAuthor ? (
-        message.authorAvatarUrl ? (
-          <img src={message.authorAvatarUrl} alt={message.author} class="h-10 w-10 rounded-full object-cover" loading="lazy" />
-        ) : (
-          <div class="h-10 w-10 rounded-full bg-panel border border-line" />
-        )
-      ) : null}
-    </div>
-
-    <div class="min-w-0 flex-1">
-      {message.replyTo ? (
-        <a href={`#m-${message.replyTo.id}`} class="mb-1 flex items-center gap-2 text-xs text-muted hover:text-slate-300 min-w-0">
+  <div class="message-inner py-3">
+    {message.replyTo ? (
+      <a href={`#m-${message.replyTo.id}`} class="mb-1 flex items-center gap-3 text-xs text-muted hover:text-slate-300 min-w-0">
+        <div class="w-10 shrink-0 flex justify-end">
           <span class="inline-block h-3 w-5 shrink-0 border-l-2 border-t-2 border-line/80 rounded-tl-md -mb-3 -mr-1" />
+        </div>
+        <div class="min-w-0 flex-1 flex items-center gap-2">
           {message.replyTo.avatarUrl ? (
             <img src={message.replyTo.avatarUrl} alt={message.replyTo.author || 'reply'} class="h-4 w-4 rounded-full object-cover shrink-0" loading="lazy" />
           ) : (
@@ -37,19 +29,32 @@ const isPdf = (name: string) => /\.pdf$/i.test(name);
             <span class="font-semibold text-slate-300">{message.replyTo.author || 'message'}</span>
             {message.replyTo.content ? <span class="ml-1">{message.replyTo.content}</span> : null}
           </span>
-        </a>
-      ) : null}
-
-      {showAuthor ? (
-        <div class="text-sm font-semibold text-slate-200">
-          {message.author}
-          <time class="text-xs text-muted font-normal ml-1" data-local-time datetime={message.timestamp}>{new Date(message.timestamp).toISOString()}</time>
         </div>
-      ) : null}
+      </a>
+    ) : null}
 
-      {message.content ? (
-        <div class="mt-1 prose prose-invert max-w-none discord-message-stream" set:html={html} />
-      ) : null}
+    <div class="flex gap-3">
+      <div class="w-10 shrink-0">
+        {showAuthor ? (
+          message.authorAvatarUrl ? (
+            <img src={message.authorAvatarUrl} alt={message.author} class="h-10 w-10 rounded-full object-cover" loading="lazy" />
+          ) : (
+            <div class="h-10 w-10 rounded-full bg-panel border border-line" />
+          )
+        ) : null}
+      </div>
+
+      <div class="min-w-0 flex-1">
+        {showAuthor ? (
+          <div class="text-sm font-semibold text-slate-200">
+            {message.author}
+            <time class="text-xs text-muted font-normal ml-1" data-local-time datetime={message.timestamp}>{new Date(message.timestamp).toISOString()}</time>
+          </div>
+        ) : null}
+
+        {message.content ? (
+          <div class="mt-1 prose prose-invert max-w-none discord-message-stream" set:html={html} />
+        ) : null}
 
       {message.thread ? (
         <a href={`/threads/${message.thread.id}`} class="mt-2 block max-w-lg rounded-md bg-panel border border-line px-3 py-2 hover:border-blurple transition-colors">
