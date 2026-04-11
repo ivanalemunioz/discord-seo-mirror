@@ -82,7 +82,13 @@ export async function getChannelNav() {
         totalPages: found.totalPages,
         category: cat.name,
         channelType: found.channelType,
-        iconKind: found.channelType === 15 ? 'forum' : (found.id === meta.guild?.rulesChannelId ? 'rules' : (found.id === meta.guild?.updatesChannelId ? 'updates' : 'text'))
+        iconKind: found.channelType === 15
+          ? 'forum'
+          : (found.channelType === 5
+              ? 'updates'
+              : (found.id === meta.guild?.rulesChannelId
+                  ? 'rules'
+                  : (found.id === meta.guild?.updatesChannelId ? 'updates' : 'text')))
       });
     }
   }
@@ -98,12 +104,27 @@ export async function getChannelNav() {
       totalPages: found.totalPages,
       category: null,
       channelType: found.channelType,
-      iconKind: found.channelType === 15 ? 'forum' : (found.id === meta.guild?.rulesChannelId ? 'rules' : (found.id === meta.guild?.updatesChannelId ? 'updates' : 'text'))
+      iconKind: found.channelType === 15
+        ? 'forum'
+        : (found.channelType === 5
+            ? 'updates'
+            : (found.id === meta.guild?.rulesChannelId
+                ? 'rules'
+                : (found.id === meta.guild?.updatesChannelId ? 'updates' : 'text')))
     });
   }
 
   if (ordered.length) return ordered;
-  return idx.map((c) => ({ id: c.id, name: c.name, slug: c.slug, count: c.totalMessages, totalPages: c.totalPages, category: null, channelType: c.channelType, iconKind: c.channelType === 15 ? 'forum' : 'text' }));
+  return idx.map((c) => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    count: c.totalMessages,
+    totalPages: c.totalPages,
+    category: null,
+    channelType: c.channelType,
+    iconKind: c.channelType === 15 ? 'forum' : (c.channelType === 5 ? 'updates' : 'text')
+  }));
 }
 
 export async function getDiscussions(): Promise<DiscussionLike[]> {
