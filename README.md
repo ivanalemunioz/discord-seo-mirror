@@ -84,6 +84,8 @@ Optional:
 5. In **Bot** page:
    - Copy token (or Reset Token then copy)
    - This value is `DISCORD_BOT_TOKEN`
+6. In **Bot → Privileged Gateway Intents**:
+   - Enable **MESSAGE CONTENT INTENT**
 
 ### Bot permissions/scopes
 
