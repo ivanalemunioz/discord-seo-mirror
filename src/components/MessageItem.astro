@@ -2,7 +2,7 @@
 // @ts-nocheck
 import { marked } from 'marked';
 
-const { message } = Astro.props;
+const { message, showAuthor = true } = Astro.props;
 const html = message.content ? marked.parse(message.content, { breaks: true }) : '';
 const renderMd = (txt: string) => marked.parse(txt || '', { breaks: true });
 
@@ -24,7 +24,11 @@ const isPdf = (name: string) => /\.pdf$/i.test(name);
       </a>
     ) : null}
 
-    <div class="text-sm font-semibold text-slate-200">{message.author} <span class="text-xs text-muted font-normal">{new Date(message.timestamp).toISOString()}</span></div>
+    {showAuthor ? (
+      <div class="text-sm font-semibold text-slate-200">{message.author} <time class="text-xs text-muted font-normal" data-local-time datetime={message.timestamp}>{new Date(message.timestamp).toISOString()}</time></div>
+    ) : (
+      <div class="h-1" />
+    )}
 
     {message.content ? (
       <div class="mt-1 prose prose-invert max-w-none discord-message-stream" set:html={html} />

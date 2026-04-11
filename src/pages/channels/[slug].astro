@@ -16,6 +16,14 @@ const currentPage = channel?.totalPages || 1;
 const pageData = channel ? await getChannelPage(channel.id, currentPage) : null;
 
 const olderHref = currentPage > 1 ? `/channels/${slug}/page/${currentPage - 1}` : null;
+
+function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>, i: number) {
+  const prev = messages[i - 1];
+  if (!prev) return true;
+  const withinHour = (new Date(messages[i].timestamp).getTime() - new Date(prev.timestamp).getTime()) <= 3600000;
+  const sameAuthor = prev.author === messages[i].author;
+  return !(sameAuthor && withinHour);
+}
 ---
 <MainLayout title={`#${channel?.name ?? slug}`} channels={channels}>
   {channel && pageData ? (
@@ -30,7 +38,7 @@ const olderHref = currentPage > 1 ? `/channels/${slug}/page/${currentPage - 1}` 
           {olderHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={olderHref}>↑ Older messages</a> : <span class="text-muted text-sm">Oldest page</span>}
         </div>
 
-        {pageData.messages.map((m) => <MessageItem message={m} />)}
+        {pageData.messages.map((m, i) => <MessageItem message={m} showAuthor={shouldShowAuthor(pageData.messages, i)} />)}
 
         <div class="mt-6 flex items-center justify-center">
           <span class="text-muted text-sm">Already newest message</span>

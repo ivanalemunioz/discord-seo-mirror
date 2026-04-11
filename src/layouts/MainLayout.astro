@@ -46,5 +46,20 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         <slot />
       </main>
     </div>
+
+    <script>
+      // @ts-nocheck
+      const fmt = new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'short',
+        timeStyle: 'short'
+      });
+      document.querySelectorAll('time[data-local-time]').forEach((el) => {
+        const dt = el.getAttribute('datetime');
+        if (!dt) return;
+        const d = new Date(dt);
+        if (Number.isNaN(d.getTime())) return;
+        el.textContent = fmt.format(d);
+      });
+    </script>
   </body>
 </html>

@@ -13,6 +13,14 @@ const { id } = Astro.params;
 const channels = await getChannelNav();
 const thread = id ? await getThreadById(id) : null;
 const parent = channels.find((c) => c.id === thread?.parentChannelId);
+
+function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>, i: number) {
+  const prev = messages[i - 1];
+  if (!prev) return true;
+  const withinHour = (new Date(messages[i].timestamp).getTime() - new Date(prev.timestamp).getTime()) <= 3600000;
+  const sameAuthor = prev.author === messages[i].author;
+  return !(sameAuthor && withinHour);
+}
 ---
 <MainLayout title={thread ? `Thread · ${thread.name}` : 'Thread'} channels={channels}>
   {thread ? (
@@ -27,7 +35,7 @@ const parent = channels.find((c) => c.id === thread?.parentChannelId);
       </header>
 
       <article id="message-root" class="mt-24">
-        {thread.messages.map((m) => <MessageItem message={m} />)}
+        {thread.messages.map((m, i) => <MessageItem message={m} showAuthor={shouldShowAuthor(thread.messages, i)} />)}
       </article>
     </section>
   ) : (
