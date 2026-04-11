@@ -4,6 +4,7 @@ import Breadcrumbs from '@/components/Breadcrumbs.astro';
 import MessageItem from '@/components/MessageItem.astro';
 import { getChannelNav, getChannelPage, getMessagePageMap } from '@/lib/content';
 import { t } from '@/lib/i18n';
+import ChannelIcon from '@/components/ChannelIcon';
 
 export async function getStaticPaths() {
   const channels = await getChannelNav();
@@ -43,7 +44,7 @@ function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>
   <section>
     <header class="fixed top-0 left-0 right-0 lg:left-[280px] z-20 bg-background/95 backdrop-blur border-b border-line pb-3 px-4 lg:px-8 pt-4">
       <Breadcrumbs items={[{ label: 'Channels', href: '/channels' }, { label: `#${channel?.name ?? slug}`, href: `/channels/${slug}` }]} />
-      <h1 class="text-xl md:text-2xl font-semibold"># {channel?.name}</h1>
+      <h1 class="text-xl md:text-2xl font-semibold flex items-center gap-2"><ChannelIcon kind={channel?.iconKind} className="h-5 w-5 text-muted" /> {channel?.name}</h1>
     </header>
 
     <article id="message-root" class={`mt-24 ${hasInvite ? 'pb-16' : 'pb-4'}`}>
