@@ -25,7 +25,7 @@ function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>
   return !(sameAuthor && withinHour);
 }
 ---
-<MainLayout title={thread ? `Thread · ${thread.name}` : 'Thread'} channels={channels}>
+<MainLayout title={thread ? `Thread · ${thread.name}` : 'Thread'} channels={channels} activeChannelId={parent?.id}>
   {thread ? (
     <section>
       <header class="fixed top-0 left-0 right-0 lg:left-[280px] z-20 bg-background/95 backdrop-blur border-b border-line pb-3 px-4 lg:px-8 pt-4">
