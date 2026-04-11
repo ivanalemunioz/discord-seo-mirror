@@ -23,6 +23,11 @@ type Guild = {
   icon?: string | null;
 };
 
+type ForumThread = {
+  id: string;
+  name: string;
+};
+
 type DiscordMessage = {
   id: string;
   content: string;
@@ -356,6 +361,26 @@ async function writeThread(threadId: string, payload: { id: string; name: string
   await fs.writeFile(path.join(THREADS_DIR, `${threadId}.json`), JSON.stringify(payload), 'utf8');
 }
 
+async function fetchForumThreads(forumChannelId: string): Promise<ForumThread[]> {
+  const out = new Map<string, ForumThread>();
+
+  try {
+    const active = await api<{ threads?: Array<{ id: string; name: string }> }>(`/channels/${forumChannelId}/threads/active`);
+    for (const t of active.threads || []) out.set(t.id, { id: t.id, name: t.name || `Thread ${t.id}` });
+  } catch {
+    // ignore
+  }
+
+  try {
+    const archived = await api<{ threads?: Array<{ id: string; name: string }> }>(`/channels/${forumChannelId}/threads/archived/public?limit=100`);
+    for (const t of archived.threads || []) out.set(t.id, { id: t.id, name: t.name || `Thread ${t.id}` });
+  } catch {
+    // ignore
+  }
+
+  return [...out.values()];
+}
+
 async function main() {
   const state = await readState();
   await fs.mkdir(DATA_DIR, { recursive: true });
@@ -393,8 +418,16 @@ async function main() {
         console.log(`Incremental #${channel.name}: +${newer.length} messages`);
       }
 
-      const threadIds = [...new Set(allMessages.map((m) => m.thread?.id).filter(Boolean))] as string[];
+      const forumThreads = channel.type === 15 ? await fetchForumThreads(channel.id) : [];
+      const forumThreadNameMap = new Map(forumThreads.map((t) => [t.id, t.name]));
+
+      const threadIds = [...new Set([
+        ...allMessages.map((m) => m.thread?.id).filter(Boolean),
+        ...forumThreads.map((t) => t.id)
+      ])] as string[];
+
       const threadMap = new Map<string, ThreadSummary>();
+      const threadFirstMap = new Map<string, StoredMessage | undefined>();
 
       for (const threadId of threadIds) {
         try {
@@ -413,7 +446,7 @@ async function main() {
             }));
 
           const starter = allMessages.find((m) => m.thread?.id === threadId);
-          const name = starter?.thread?.name || `Thread ${threadId}`;
+          const name = forumThreadNameMap.get(threadId) || starter?.thread?.name || `Thread ${threadId}`;
           const last = threadStored.at(-1);
 
           await writeThread(threadId, {
@@ -423,6 +456,7 @@ async function main() {
             messages: threadStored
           });
 
+          threadFirstMap.set(threadId, threadStored[0]);
           threadMap.set(threadId, {
             id: threadId,
             name,
@@ -435,15 +469,38 @@ async function main() {
         }
       }
 
-      const stored = allMessages
-        .filter((m) => hasVisibleContent(m))
-        .map((m) => toStoredMessage(m, threadMap));
+      const stored = channel.type === 15
+        ? [...threadMap.values()]
+            .map((t) => {
+              const first = threadFirstMap.get(t.id);
+              return {
+                id: first?.id || t.id,
+                author: first?.author || 'unknown',
+                authorAvatarUrl: first?.authorAvatarUrl,
+                timestamp: first?.timestamp || t.lastMessageAt || new Date().toISOString(),
+                editedAt: first?.editedAt,
+                content: first?.content || '',
+                attachments: first?.attachments || [],
+                embeds: first?.embeds || [],
+                thread: {
+                  id: t.id,
+                  name: t.name,
+                  messageCount: t.messageCount,
+                  lastMessageAt: t.lastMessageAt,
+                  preview: t.preview
+                }
+              } as StoredMessage;
+            })
+            .sort((a, b) => cmpSnowflake(a.id, b.id))
+        : allMessages
+            .filter((m) => hasVisibleContent(m))
+            .map((m) => toStoredMessage(m, threadMap));
 
       await fs.mkdir(path.dirname(cachePath), { recursive: true });
       await fs.writeFile(cachePath, JSON.stringify(allMessages), 'utf8');
 
       const totalPages = await writeChannelPages(channel, stored);
-      const lastId = allMessages.at(-1)?.id;
+      const lastId = allMessages.at(-1)?.id || stored.at(-1)?.id;
       if (lastId) state.channels[channel.id] = { initialized: true, lastMessageId: lastId };
 
       indexItems.push({

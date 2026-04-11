@@ -134,41 +134,45 @@ export async function getDiscussions(): Promise<DiscussionLike[]> {
 
 export async function getChannelPage(channelId: string, pageNumber: number) {
   const file = path.join(DATA_DIR, channelId, `page-${String(pageNumber).padStart(5, '0')}.json`);
-  return JSON.parse(await fs.readFile(file, 'utf8')) as {
-    channelId: string;
-    channelName: string;
-    channelSlug: string;
-    pageNumber: number;
-    totalPages: number;
-    messages: Array<{
-      id: string;
-      author: string;
-      authorAvatarUrl?: string;
-      timestamp: string;
-      editedAt?: string | null;
-      content: string;
-      attachments: Array<{ url: string; filename: string }>;
-      embeds?: Array<{
-        title?: string;
-        description?: string;
-        url?: string;
-        fields?: Array<{ name?: string; value?: string }>;
+  try {
+    return JSON.parse(await fs.readFile(file, 'utf8')) as {
+      channelId: string;
+      channelName: string;
+      channelSlug: string;
+      pageNumber: number;
+      totalPages: number;
+      messages: Array<{
+        id: string;
+        author: string;
+        authorAvatarUrl?: string;
+        timestamp: string;
+        editedAt?: string | null;
+        content: string;
+        attachments: Array<{ url: string; filename: string }>;
+        embeds?: Array<{
+          title?: string;
+          description?: string;
+          url?: string;
+          fields?: Array<{ name?: string; value?: string }>;
+        }>;
+        replyTo?: {
+          id: string;
+          author?: string;
+          avatarUrl?: string;
+          content?: string;
+        };
+        thread?: {
+          id: string;
+          name: string;
+          messageCount: number;
+          lastMessageAt?: string;
+          preview?: string;
+        };
       }>;
-      replyTo?: {
-        id: string;
-        author?: string;
-        avatarUrl?: string;
-        content?: string;
-      };
-      thread?: {
-        id: string;
-        name: string;
-        messageCount: number;
-        lastMessageAt?: string;
-        preview?: string;
-      };
-    }>;
-  };
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function getThreadById(threadId: string) {

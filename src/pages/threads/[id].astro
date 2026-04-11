@@ -3,6 +3,7 @@ import MainLayout from '@/layouts/MainLayout.astro';
 import Breadcrumbs from '@/components/Breadcrumbs.astro';
 import MessageItem from '@/components/MessageItem.astro';
 import { getChannelNav, getThreadById } from '@/lib/content';
+import { t } from '@/lib/i18n';
 
 export async function getStaticPaths() {
   const files = Object.keys(import.meta.glob('/src/data/threads/*.json'));
@@ -39,6 +40,6 @@ function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>
       </article>
     </section>
   ) : (
-    <p class="text-muted mt-4">Thread not found.</p>
+    <p class="text-muted mt-4">{t('threadNotFound')}</p>
   )}
 </MainLayout>

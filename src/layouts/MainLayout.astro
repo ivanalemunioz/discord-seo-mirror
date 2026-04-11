@@ -2,6 +2,7 @@
 import '@/styles/global.css';
 import type { NavChannel } from '@/lib/types';
 import { getSiteMeta } from '@/lib/content';
+import { t } from '@/lib/i18n';
 
 interface Props {
   title: string;
@@ -43,10 +44,9 @@ for (const channel of channels) {
           {siteMeta.serverIconUrl ? <img src={siteMeta.serverIconUrl} alt={siteMeta.serverName} class="h-6 w-6 rounded-full" /> : null}
           <span>{siteMeta.serverName}</span>
         </a>
+        <p class="text-muted text-sm mt-1">{t('discordCommunity')}</p>
         <nav class="mt-6 space-y-1">
-          <a class="channel-row" href="/">Home</a>
-          <a class="channel-row" href="/latest">Latest</a>
-          <a class="channel-row" href="/search">Search</a>
+          <a class="channel-row" href="/">{t('home')}</a>
 
           {[...groups.entries()].map(([cat, list]) => (
             <div class="pt-3">

@@ -3,6 +3,7 @@ import MainLayout from '@/layouts/MainLayout.astro';
 import Breadcrumbs from '@/components/Breadcrumbs.astro';
 import MessageItem from '@/components/MessageItem.astro';
 import { getChannelNav, getChannelPage } from '@/lib/content';
+import { t } from '@/lib/i18n';
 
 export async function getStaticPaths() {
   const channels = await getChannelNav();
@@ -43,13 +44,13 @@ function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>
 
     <article id="message-root" class="mt-24">
       <div class="mb-4 flex items-center justify-center">
-        {olderHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={olderHref}>↑ Older messages</a> : <span class="text-muted text-sm">Oldest page</span>}
+        {olderHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={olderHref}>↑ {t('oldMessages')}</a> : <span class="text-muted text-sm">{t('oldestPage')}</span>}
       </div>
 
-      {pageData ? pageData.messages.map((m, i) => <MessageItem message={m} showAuthor={shouldShowAuthor(pageData.messages, i)} />) : <p class="text-muted">This page does not exist yet.</p>}
+      {pageData ? pageData.messages.map((m, i) => <MessageItem message={m} showAuthor={shouldShowAuthor(pageData.messages, i)} />) : <p class="text-muted">{t('thisPageMissing')}</p>}
 
       <div class="mt-6 flex items-center justify-center">
-        {newerHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={newerHref}>Newest messages ↓</a> : <span class="text-muted text-sm">Already newest message</span>}
+        {newerHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={newerHref}>{t('newestMessages')} ↓</a> : <span class="text-muted text-sm">{t('alreadyNewest')}</span>}
       </div>
     </article>
 
