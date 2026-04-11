@@ -5,4 +5,5 @@ export type NavChannel = {
   count: number;
   totalPages?: number;
   category?: string | null;
+  channelType?: number;
 };

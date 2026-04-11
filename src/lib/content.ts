@@ -11,6 +11,7 @@ type ChannelIndex = {
   slug: string;
   totalMessages: number;
   totalPages: number;
+  channelType?: number;
 };
 
 type DiscussionLike = {
@@ -77,7 +78,8 @@ export async function getChannelNav() {
         slug: found.slug,
         count: found.totalMessages,
         totalPages: found.totalPages,
-        category: cat.name
+        category: cat.name,
+        channelType: found.channelType
       });
     }
   }
@@ -91,12 +93,13 @@ export async function getChannelNav() {
       slug: found.slug,
       count: found.totalMessages,
       totalPages: found.totalPages,
-      category: null
+      category: null,
+      channelType: found.channelType
     });
   }
 
   if (ordered.length) return ordered;
-  return idx.map((c) => ({ id: c.id, name: c.name, slug: c.slug, count: c.totalMessages, totalPages: c.totalPages, category: null }));
+  return idx.map((c) => ({ id: c.id, name: c.name, slug: c.slug, count: c.totalMessages, totalPages: c.totalPages, category: null, channelType: c.channelType }));
 }
 
 export async function getDiscussions(): Promise<DiscussionLike[]> {

@@ -315,7 +315,7 @@ async function writeChannelPages(channel: Channel, messages: StoredMessage[]) {
   return pages.length;
 }
 
-async function writeIndex(items: Array<{ id: string; name: string; slug: string; totalMessages: number; totalPages: number }>) {
+async function writeIndex(items: Array<{ id: string; name: string; slug: string; totalMessages: number; totalPages: number; channelType: number }>) {
   await fs.mkdir(DATA_DIR, { recursive: true });
   await fs.writeFile(path.join(DATA_DIR, 'index.json'), JSON.stringify(items, null, 2), 'utf8');
 }
@@ -393,7 +393,7 @@ async function main() {
 
   console.log(`Channels detected: ${channels.length}, included as public: ${included.length}`);
 
-  const indexItems: Array<{ id: string; name: string; slug: string; totalMessages: number; totalPages: number }> = [];
+  const indexItems: Array<{ id: string; name: string; slug: string; totalMessages: number; totalPages: number; channelType: number }> = [];
 
   for (const channel of included) {
     try {
@@ -508,7 +508,8 @@ async function main() {
         name: channel.name,
         slug: slugify(channel.name),
         totalMessages: stored.length,
-        totalPages
+        totalPages,
+        channelType: channel.type
       });
 
       console.log(`Built #${channel.name}: ${totalPages} pages`);

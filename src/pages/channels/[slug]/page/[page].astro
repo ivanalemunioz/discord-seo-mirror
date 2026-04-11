@@ -28,6 +28,7 @@ const inviteUrl = process.env.DISCORD_INVITE_URL || '#';
 
 const olderHref = currentPage > 1 ? `/channels/${slug}/page/${currentPage - 1}` : null;
 const newerHref = channel && currentPage < channel.totalPages ? `/channels/${slug}/page/${currentPage + 1}` : null;
+const isForum = channel?.channelType === 15;
 
 function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>, i: number) {
   const prev = messages[i - 1];
@@ -49,13 +50,29 @@ function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>
         {olderHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={olderHref}>↑ {t('oldMessages')}</a> : <span class="text-muted text-sm">{t('oldestPage')}</span>}
       </div>
 
-      {pageData ? pageData.messages.map((m, i) => {
-        const targetPage = m.replyTo?.id ? messagePageMap.get(m.replyTo.id) : undefined;
-        const msg = targetPage
-          ? { ...m, replyTo: { ...m.replyTo, href: targetPage === currentPage ? `#m-${m.replyTo?.id}` : `/channels/${slug}/page/${targetPage}#m-${m.replyTo?.id}` } }
-          : m;
-        return <MessageItem message={msg} showAuthor={shouldShowAuthor(pageData.messages, i)} />;
-      }) : <p class="text-muted">{t('thisPageMissing')}</p>}
+      {!pageData || !pageData.messages?.length ? (
+        <p class="text-muted">{t('thisPageMissing')}</p>
+      ) : isForum ? (
+        <div class="space-y-3">
+          {pageData.messages.map((m) => (
+            <a href={`/threads/${m.thread?.id}`} class="block rounded-lg border border-line bg-surface p-4 hover:border-blurple transition-colors">
+              <div class="text-sm font-semibold text-slate-200">{m.thread?.name || m.content || 'Thread'}</div>
+              <div class="mt-1 text-sm text-slate-300 line-clamp-2">{m.thread?.preview || m.content || ''}</div>
+              <div class="mt-2 text-xs text-muted">{m.author} · {m.thread?.messageCount || 0} {t('messagesWord')}</div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <>
+          {pageData.messages.map((m, i) => {
+            const targetPage = m.replyTo?.id ? messagePageMap.get(m.replyTo.id) : undefined;
+            const msg = targetPage
+              ? { ...m, replyTo: { ...m.replyTo, href: targetPage === currentPage ? `#m-${m.replyTo?.id}` : `/channels/${slug}/page/${targetPage}#m-${m.replyTo?.id}` } }
+              : m;
+            return <MessageItem message={msg} showAuthor={shouldShowAuthor(pageData.messages, i)} />;
+          })}
+        </>
+      )}
 
       <div class="mt-6 flex items-center justify-center">
         {newerHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={`${newerHref}?top=1`}>{t('newestMessages')} ↓</a> : <span class="text-muted text-sm">{t('alreadyNewest')}</span>}

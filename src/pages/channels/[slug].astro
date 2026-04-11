@@ -19,6 +19,7 @@ const messagePageMap = channel ? await getMessagePageMap(channel.id) : new Map<s
 const inviteUrl = process.env.DISCORD_INVITE_URL || '#';
 
 const olderHref = currentPage > 1 ? `/channels/${slug}/page/${currentPage - 1}` : null;
+const isForum = channel?.channelType === 15;
 
 function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>, i: number) {
   const prev = messages[i - 1];
@@ -29,77 +30,89 @@ function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>
 }
 ---
 <MainLayout title={`#${channel?.name ?? slug}`} channels={channels}>
-  {channel && pageData ? (
-    <section>
-      <header class="fixed top-0 left-0 right-0 lg:left-[280px] z-20 bg-background/95 backdrop-blur border-b border-line pb-3 px-4 lg:px-8 pt-4">
-        <Breadcrumbs items={[{ label: 'Channels', href: '/channels' }, { label: `#${channel.name}`, href: `/channels/${slug}` }]} />
-        <h1 class="text-xl md:text-2xl font-semibold"># {channel.name}</h1>
-      </header>
+  <section>
+    <header class="fixed top-0 left-0 right-0 lg:left-[280px] z-20 bg-background/95 backdrop-blur border-b border-line pb-3 px-4 lg:px-8 pt-4">
+      <Breadcrumbs items={[{ label: 'Channels', href: '/channels' }, { label: `#${channel?.name ?? slug}`, href: `/channels/${slug}` }]} />
+      <h1 class="text-xl md:text-2xl font-semibold"># {channel?.name}</h1>
+    </header>
 
-      <article id="message-root" class="mt-24 pb-24">
-        <div class="mb-4 flex items-center justify-center">
-          {olderHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={olderHref}>↑ {t('oldMessages')}</a> : <span class="text-muted text-sm">{t('oldestPage')}</span>}
-        </div>
-
-        {pageData.messages.map((m, i) => {
-          const targetPage = m.replyTo?.id ? messagePageMap.get(m.replyTo.id) : undefined;
-          const msg = targetPage
-            ? { ...m, replyTo: { ...m.replyTo, href: targetPage === currentPage ? `#m-${m.replyTo?.id}` : `/channels/${slug}/page/${targetPage}#m-${m.replyTo?.id}` } }
-            : m;
-          return <MessageItem message={msg} showAuthor={shouldShowAuthor(pageData.messages, i)} />;
-        })}
-
-        <div class="mt-6 flex items-center justify-center">
-          <span class="text-muted text-sm">{t('alreadyNewest')}</span>
-        </div>
-      </article>
-
-      <script>
-        // @ts-nocheck
-        const focusMessage = (id) => {
-          if (!id) return;
-          const el = document.getElementById(id);
-          if (!el) return;
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          el.classList.add('message-focus-highlight');
-          setTimeout(() => el.classList.remove('message-focus-highlight'), 3000);
-        };
-
-        requestAnimationFrame(() => {
-          if (location.hash) {
-            focusMessage(location.hash.slice(1));
-          } else if (new URLSearchParams(location.search).get('top') === '1') {
-            window.scrollTo({ top: 0, behavior: 'auto' });
-          } else {
-            window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' });
-          }
-        });
-
-        document.addEventListener('click', (ev) => {
-          const a = ev.target instanceof Element ? ev.target.closest('a[href^="#m-"]') : null;
-          if (!a) return;
-          ev.preventDefault();
-          const id = a.getAttribute('href')?.slice(1);
-          if (!id) return;
-          history.replaceState(null, '', `#${id}`);
-          focusMessage(id);
-        });
-
-        window.addEventListener('hashchange', () => {
-          focusMessage(location.hash.slice(1));
-        });
-      </script>
-
-      <div class="fixed bottom-4 left-4 right-4 lg:left-[304px] lg:right-8 z-30 group">
-        <div class="bg-surface border border-line rounded-lg px-4 py-3 text-sm text-muted text-center hover:border-blurple transition-colors">
-          Write a message...
-        </div>
-        <a href={inviteUrl} target="_blank" rel="noreferrer" class="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-panel border border-line rounded-md px-3 py-1 text-xs text-slate-200 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity">
-          Join to the community
-        </a>
+    <article id="message-root" class="mt-24 pb-24">
+      <div class="mb-4 flex items-center justify-center">
+        {olderHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={olderHref}>↑ {t('oldMessages')}</a> : <span class="text-muted text-sm">{t('oldestPage')}</span>}
       </div>
-    </section>
-  ) : (
-    <p class="text-muted mt-4">{t('noMessagesYet')}</p>
-  )}
+
+      {!pageData || !pageData.messages?.length ? (
+        <p class="text-muted">{t('noMessagesYet')}</p>
+      ) : isForum ? (
+        <div class="space-y-3">
+          {pageData.messages.map((m) => (
+            <a href={`/threads/${m.thread?.id}`} class="block rounded-lg border border-line bg-surface p-4 hover:border-blurple transition-colors">
+              <div class="text-sm font-semibold text-slate-200">{m.thread?.name || m.content || 'Thread'}</div>
+              <div class="mt-1 text-sm text-slate-300 line-clamp-2">{m.thread?.preview || m.content || ''}</div>
+              <div class="mt-2 text-xs text-muted">{m.author} · {m.thread?.messageCount || 0} {t('messagesWord')}</div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <>
+          {pageData.messages.map((m, i) => {
+            const targetPage = m.replyTo?.id ? messagePageMap.get(m.replyTo.id) : undefined;
+            const msg = targetPage
+              ? { ...m, replyTo: { ...m.replyTo, href: targetPage === currentPage ? `#m-${m.replyTo?.id}` : `/channels/${slug}/page/${targetPage}#m-${m.replyTo?.id}` } }
+              : m;
+            return <MessageItem message={msg} showAuthor={shouldShowAuthor(pageData.messages, i)} />;
+          })}
+        </>
+      )}
+
+      <div class="mt-6 flex items-center justify-center">
+        <span class="text-muted text-sm">{t('alreadyNewest')}</span>
+      </div>
+    </article>
+
+    <script>
+      // @ts-nocheck
+      const focusMessage = (id) => {
+        if (!id) return;
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('message-focus-highlight');
+        setTimeout(() => el.classList.remove('message-focus-highlight'), 3000);
+      };
+
+      requestAnimationFrame(() => {
+        if (location.hash) {
+          focusMessage(location.hash.slice(1));
+        } else if (new URLSearchParams(location.search).get('top') === '1') {
+          window.scrollTo({ top: 0, behavior: 'auto' });
+        } else {
+          window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' });
+        }
+      });
+
+      document.addEventListener('click', (ev) => {
+        const a = ev.target instanceof Element ? ev.target.closest('a[href^="#m-"]') : null;
+        if (!a) return;
+        ev.preventDefault();
+        const id = a.getAttribute('href')?.slice(1);
+        if (!id) return;
+        history.replaceState(null, '', `#${id}`);
+        focusMessage(id);
+      });
+
+      window.addEventListener('hashchange', () => {
+        focusMessage(location.hash.slice(1));
+      });
+    </script>
+
+    <div class="fixed bottom-4 left-4 right-4 lg:left-[304px] lg:right-8 z-30 group">
+      <div class="bg-surface border border-line rounded-lg px-4 py-3 text-sm text-muted text-center hover:border-blurple transition-colors">
+        Write a message...
+      </div>
+      <a href={inviteUrl} target="_blank" rel="noreferrer" class="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-panel border border-line rounded-md px-3 py-1 text-xs text-slate-200 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity">
+        Join to the community
+      </a>
+    </div>
+  </section>
 </MainLayout>
