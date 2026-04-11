@@ -59,12 +59,8 @@ a { @apply text-blue-300 hover:text-blue-200; }
   width: 100%;
 }
 .message-inner {
-  padding-left: 1rem;
-  padding-right: 1rem;
 }
 @media (min-width: 1024px) {
   .message-inner {
-    padding-left: 2rem;
-    padding-right: 2rem;
   }
 }
