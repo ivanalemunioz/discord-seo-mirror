@@ -42,6 +42,13 @@ type DiscordMessage = {
   }>;
 };
 
+type StoredEmbed = {
+  title?: string;
+  description?: string;
+  url?: string;
+  fields?: Array<{ name?: string; value?: string }>;
+};
+
 type StoredMessage = {
   id: string;
   author: string;
@@ -49,6 +56,7 @@ type StoredMessage = {
   editedAt?: string | null;
   content: string;
   attachments: { url: string; filename: string }[];
+  embeds?: StoredEmbed[];
   replyTo?: {
     id: string;
     author?: string;
@@ -158,28 +166,20 @@ function cleanContent(text: string) {
     .trim();
 }
 
-function extractEmbedText(m: DiscordMessage) {
-  const blocks: string[] = [];
-  for (const e of m.embeds || []) {
-    if (e.title) blocks.push(`**${cleanContent(e.title)}**`);
-    if (e.description) blocks.push(cleanContent(e.description));
-    if (e.fields?.length) {
-      for (const f of e.fields) {
-        const n = cleanContent(f.name || '');
-        const v = cleanContent(f.value || '');
-        if (n || v) blocks.push(`${n ? `**${n}:** ` : ''}${v}`.trim());
-      }
-    }
-    if (e.url) blocks.push(e.url);
-  }
-  return blocks.join('\n\n').trim();
+function extractEmbeds(m: DiscordMessage): StoredEmbed[] {
+  return (m.embeds || []).map((e) => ({
+    title: cleanContent(e.title || ''),
+    description: cleanContent(e.description || ''),
+    url: e.url,
+    fields: (e.fields || []).map((f) => ({ name: cleanContent(f.name || ''), value: cleanContent(f.value || '') }))
+  })).filter((e) => e.title || e.description || e.url || (e.fields && e.fields.length));
 }
 
 function hasVisibleContent(m: DiscordMessage) {
   return Boolean(
     cleanContent(m.content || '') ||
     (m.attachments && m.attachments.length > 0) ||
-    extractEmbedText(m)
+    extractEmbeds(m).length
   );
 }
 
@@ -188,7 +188,8 @@ function toStoredMessage(m: DiscordMessage, threads: Map<string, ThreadSummary>)
   const threadId = m.thread?.id;
   const threadSummary = threadId ? threads.get(threadId) : undefined;
 
-  const content = cleanContent(m.content || '') || extractEmbedText(m);
+  const content = cleanContent(m.content || '');
+  const embeds = extractEmbeds(m);
 
   return {
     id: m.id,
@@ -197,6 +198,7 @@ function toStoredMessage(m: DiscordMessage, threads: Map<string, ThreadSummary>)
     editedAt: m.edited_timestamp,
     content,
     attachments: (m.attachments || []).map((a) => ({ url: a.url, filename: a.filename })),
+    embeds,
     replyTo: replyId
       ? {
           id: replyId,
@@ -337,8 +339,9 @@ async function main() {
               author: m.author?.global_name || m.author?.username || 'unknown',
               timestamp: m.timestamp,
               editedAt: m.edited_timestamp,
-              content: cleanContent(m.content || '') || extractEmbedText(m),
-              attachments: (m.attachments || []).map((a) => ({ url: a.url, filename: a.filename }))
+              content: cleanContent(m.content || ''),
+              attachments: (m.attachments || []).map((a) => ({ url: a.url, filename: a.filename })),
+              embeds: extractEmbeds(m)
             }));
 
           const starter = allMessages.find((m) => m.thread?.id === threadId);

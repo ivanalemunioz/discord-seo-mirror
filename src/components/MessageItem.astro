@@ -1,8 +1,10 @@
 ---
+// @ts-nocheck
 import { marked } from 'marked';
 
 const { message } = Astro.props;
 const html = message.content ? marked.parse(message.content, { breaks: true }) : '';
+const renderMd = (txt: string) => marked.parse(txt || '', { breaks: true });
 
 const isImage = (name: string) => /\.(png|jpe?g|gif|webp|svg)$/i.test(name);
 const isVideo = (name: string) => /\.(mp4|webm|mov|m4v)$/i.test(name);
@@ -33,6 +35,28 @@ const isPdf = (name: string) => /\.pdf$/i.test(name);
         <div class="text-sm font-semibold text-slate-200">{message.thread.name} <span class="text-blue-300">›</span></div>
         <div class="text-xs text-muted mt-1">{message.thread.messageCount} messages{message.thread.preview ? ` · ${message.thread.preview}` : ''}</div>
       </a>
+    ) : null}
+
+    {message.embeds?.length ? (
+      <div class="mt-2 space-y-2 max-w-2xl">
+        {message.embeds.map((e) => (
+          <div class="rounded-md border border-line bg-panel/60 px-3 py-2">
+            {e.title ? <div class="text-sm font-semibold text-slate-200">{e.title}</div> : null}
+            {e.description ? <div class="mt-1 text-sm discord-message-stream" set:html={renderMd(e.description)} /> : null}
+            {e.fields?.length ? (
+              <div class="mt-2 grid gap-1">
+                {e.fields.map((f) => (
+                  <div class="text-xs">
+                    {f.name ? <span class="font-semibold text-slate-300">{f.name}: </span> : null}
+                    {f.value ? <span class="text-slate-300" set:html={renderMd(f.value)} /> : null}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+            {e.url ? <a href={e.url} target="_blank" rel="noreferrer" class="mt-2 inline-block text-xs">Open embed source</a> : null}
+          </div>
+        ))}
+      </div>
     ) : null}
 
     {message.attachments?.length ? (

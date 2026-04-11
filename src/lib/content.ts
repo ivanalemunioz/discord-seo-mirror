@@ -88,6 +88,12 @@ export async function getChannelPage(channelId: string, pageNumber: number) {
       editedAt?: string | null;
       content: string;
       attachments: Array<{ url: string; filename: string }>;
+      embeds?: Array<{
+        title?: string;
+        description?: string;
+        url?: string;
+        fields?: Array<{ name?: string; value?: string }>;
+      }>;
       replyTo?: {
         id: string;
         author?: string;
@@ -117,6 +123,12 @@ export async function getThreadById(threadId: string) {
       editedAt?: string | null;
       content: string;
       attachments: Array<{ url: string; filename: string }>;
+      embeds?: Array<{
+        title?: string;
+        description?: string;
+        url?: string;
+        fields?: Array<{ name?: string; value?: string }>;
+      }>;
     }>;
   };
 }
