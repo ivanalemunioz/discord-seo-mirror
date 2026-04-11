@@ -24,7 +24,7 @@ const channels = await getChannelNav();
 const channel = channels.find((c) => c.slug === slug);
 const pageData = channel ? await getChannelPage(channel.id, currentPage) : null;
 const messagePageMap = channel ? await getMessagePageMap(channel.id) : new Map<string, number>();
-const inviteUrl = process.env.DISCORD_INVITE_URL || '';
+const inviteUrl = import.meta.env.PUBLIC_DISCORD_INVITE_URL || '';
 const hasInvite = Boolean(inviteUrl);
 
 const olderHref = currentPage > 1 ? `/channels/${slug}/page/${currentPage - 1}` : null;
