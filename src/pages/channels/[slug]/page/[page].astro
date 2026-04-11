@@ -49,6 +49,10 @@ function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>
     <article id="message-root" class={`mt-24 ${hasInvite ? 'pb-16' : 'pb-4'}`}>
       {!pageData || !pageData.messages?.length ? (
         <p class="text-muted">{t('thisPageMissing')}</p>
+      ) : olderHref ? (
+        <div class="mb-4 flex items-center justify-center">
+          <a class="text-sm text-blue-300 hover:text-blue-200" href={olderHref}>↑ {t('oldMessages')}</a>
+        </div>
       ) : null}
 
       {!pageData || !pageData.messages?.length ? null : isForum ? (
