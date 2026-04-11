@@ -20,6 +20,12 @@ a { @apply text-blue-300 hover:text-blue-200; }
 }
 .discord-message-stream p {
   @apply text-[15px] leading-6 text-slate-300 mt-0 mb-2;
+  white-space: pre-wrap;
+}
+
+.discord-message-stream li,
+.discord-message-stream blockquote {
+  white-space: pre-wrap;
 }
 .discord-message-stream,
 .discord-message-stream * {
