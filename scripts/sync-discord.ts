@@ -176,7 +176,8 @@ function extractEmbeds(m: DiscordMessage): StoredEmbed[] {
 }
 
 function isUserMessage(m: DiscordMessage) {
-  return m.type === 0;
+  // 0 = DEFAULT, 19 = REPLY
+  return m.type === 0 || m.type === 19;
 }
 
 function hasVisibleContent(m: DiscordMessage) {

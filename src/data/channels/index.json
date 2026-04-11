@@ -3,14 +3,14 @@
     "id": "1250937098546974751",
     "name": "api",
     "slug": "api",
-    "totalMessages": 189,
-    "totalPages": 2
+    "totalMessages": 301,
+    "totalPages": 4
   },
   {
     "id": "1334218444358287462",
     "name": "ask-ai",
     "slug": "ask-ai",
-    "totalMessages": 473,
+    "totalMessages": 482,
     "totalPages": 5
   },
   {
@@ -31,8 +31,8 @@
     "id": "1250797858018562159",
     "name": "general",
     "slug": "general",
-    "totalMessages": 1182,
-    "totalPages": 12
+    "totalMessages": 2006,
+    "totalPages": 21
   },
   {
     "id": "1362075128225071166",
@@ -45,15 +45,15 @@
     "id": "1362075091168526426",
     "name": "n8n",
     "slug": "n8n",
-    "totalMessages": 72,
-    "totalPages": 1
+    "totalMessages": 125,
+    "totalPages": 2
   },
   {
     "id": "1250937011502579793",
     "name": "nodejs",
     "slug": "nodejs",
-    "totalMessages": 221,
-    "totalPages": 3
+    "totalMessages": 382,
+    "totalPages": 4
   },
   {
     "id": "1336879215114453062",
@@ -66,35 +66,35 @@
     "id": "1250937031056429146",
     "name": "php",
     "slug": "php",
-    "totalMessages": 293,
-    "totalPages": 3
+    "totalMessages": 508,
+    "totalPages": 6
   },
   {
     "id": "1250937047703879833",
     "name": "python",
     "slug": "python",
-    "totalMessages": 57,
+    "totalMessages": 92,
     "totalPages": 1
   },
   {
     "id": "1250937061490429953",
     "name": "ruby",
     "slug": "ruby",
-    "totalMessages": 4,
+    "totalMessages": 5,
     "totalPages": 1
   },
   {
     "id": "1397527397414342800",
     "name": "vb6",
     "slug": "vb6",
-    "totalMessages": 39,
+    "totalMessages": 57,
     "totalPages": 1
   },
   {
     "id": "1362075044431270079",
     "name": "vfp",
     "slug": "vfp",
-    "totalMessages": 36,
+    "totalMessages": 57,
     "totalPages": 1
   }
 ]
