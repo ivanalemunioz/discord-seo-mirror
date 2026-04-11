@@ -1,22 +1,30 @@
 ---
 import MainLayout from '@/layouts/MainLayout.astro';
-import DiscussionCard from '@/components/DiscussionCard.astro';
-import { Button } from '@/components/ui/button';
-import { getDiscussions, getChannelNav } from '@/lib/content';
+import { getChannelNav } from '@/lib/content';
 
-const discussions = await getDiscussions();
 const channels = await getChannelNav();
-const latest = discussions.slice(0, 20);
+const grouped = new Map<string, typeof channels>();
+for (const c of channels) {
+  const key = c.category || 'Ungrouped';
+  if (!grouped.has(key)) grouped.set(key, [] as any);
+  grouped.get(key)!.push(c);
+}
 ---
 
-<MainLayout title="Discord SEO Mirror" description="Search-indexable mirror of public Discord discussions" channels={channels}>
-  <h1 class="text-3xl font-bold">Public Discord discussions</h1>
-  <p class="text-muted mt-2">Daily-synced archive of public-by-default channels and threads.</p>
-  <div class="mt-4 flex gap-2">
-    <a href="/search"><Button variant="default">Search archive</Button></a>
-    <a href="/channels"><Button variant="outline">Browse channels</Button></a>
-  </div>
-  <section class="grid gap-4 mt-6">
-    {latest.map((item) => <DiscussionCard item={item} />)}
-  </section>
+<MainLayout title="Home" description="Channel list" channels={channels}>
+  <h1 class="text-2xl font-semibold">Channels</h1>
+
+  {[...grouped.entries()].map(([cat, list]) => (
+    <section class="mt-6">
+      {cat !== 'Ungrouped' ? <h2 class="text-sm uppercase tracking-wide text-muted mb-2">{cat}</h2> : null}
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {list.map((c) => (
+          <a href={`/channels/${c.slug}`} class="card p-4 hover:border-blurple transition-colors">
+            <div class="text-base font-medium"># {c.name}</div>
+            <div class="text-sm text-muted mt-1">{c.count} messages</div>
+          </a>
+        ))}
+      </div>
+    </section>
+  ))}
 </MainLayout>

@@ -1,6 +1,7 @@
 ---
 import '@/styles/global.css';
 import type { NavChannel } from '@/lib/types';
+import { getSiteMeta } from '@/lib/content';
 
 interface Props {
   title: string;
@@ -10,6 +11,15 @@ interface Props {
 
 const { title, description = 'Public Discord discussions mirrored for search.', channels = [] } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
+const siteMeta = await getSiteMeta();
+const fullTitle = `${title} - ${siteMeta.serverName}`;
+
+const groups = new Map<string, NavChannel[]>();
+for (const channel of channels) {
+  const key = channel.category || 'Ungrouped';
+  if (!groups.has(key)) groups.set(key, []);
+  groups.get(key)!.push(channel);
+}
 ---
 
 <!doctype html>
@@ -17,10 +27,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{title}</title>
+    <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical.toString()} />
-    <meta property="og:title" content={title} />
+    {siteMeta.serverIconUrl ? <link rel="icon" href={siteMeta.serverIconUrl} /> : null}
+    <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical.toString()} />
@@ -28,17 +39,27 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   <body>
     <div class="min-h-screen">
       <aside class="border-r border-line bg-surface p-4 hidden lg:block fixed left-0 top-0 h-screen w-[280px] overflow-y-auto">
-        <a href="/" class="font-semibold text-lg">Discord SEO Mirror</a>
-        <p class="text-muted text-sm mt-1">Public community archive</p>
+        <a href="/" class="font-semibold text-lg flex items-center gap-2">
+          {siteMeta.serverIconUrl ? <img src={siteMeta.serverIconUrl} alt={siteMeta.serverName} class="h-6 w-6 rounded-full" /> : null}
+          <span>{siteMeta.serverName}</span>
+        </a>
         <nav class="mt-6 space-y-1">
           <a class="channel-row" href="/">Home</a>
           <a class="channel-row" href="/latest">Latest</a>
-          <a class="channel-row" href="/channels">Channels</a>
-          {channels.map((channel) => (
-            <a class="channel-row" href={`/channels/${channel.slug}`}>
-              <span># {channel.name}</span>
-              <span class="ml-auto text-xs">{channel.count}</span>
-            </a>
+          <a class="channel-row" href="/search">Search</a>
+
+          {[...groups.entries()].map(([cat, list]) => (
+            <div class="pt-3">
+              {cat !== 'Ungrouped' ? <div class="px-3 text-[11px] uppercase tracking-wide text-muted">{cat}</div> : null}
+              <div class="mt-1 space-y-1">
+                {list.map((channel) => (
+                  <a class="channel-row" href={`/channels/${channel.slug}`}>
+                    <span># {channel.name}</span>
+                    <span class="ml-auto text-xs">{channel.count}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
       </aside>

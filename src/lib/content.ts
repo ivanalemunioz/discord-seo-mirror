@@ -3,6 +3,7 @@ import path from 'node:path';
 
 const DATA_DIR = path.resolve('src/data/channels');
 const THREADS_DIR = path.resolve('src/data/threads');
+const META_FILE = path.resolve('src/data/meta.json');
 
 type ChannelIndex = {
   id: string;
@@ -27,6 +28,14 @@ type DiscussionLike = {
   };
 };
 
+type Meta = {
+  guild?: { id: string; name: string; iconUrl?: string };
+  nav?: {
+    categories: Array<{ id: string; name: string; channels: Array<{ id: string; name: string; position: number }> }>;
+    uncategorized: Array<{ id: string; name: string; position: number }>;
+  };
+};
+
 async function readIndex(): Promise<ChannelIndex[]> {
   try {
     return JSON.parse(await fs.readFile(path.join(DATA_DIR, 'index.json'), 'utf8')) as ChannelIndex[];
@@ -35,9 +44,59 @@ async function readIndex(): Promise<ChannelIndex[]> {
   }
 }
 
+async function readMeta(): Promise<Meta> {
+  try {
+    return JSON.parse(await fs.readFile(META_FILE, 'utf8')) as Meta;
+  } catch {
+    return {};
+  }
+}
+
+export async function getSiteMeta() {
+  const meta = await readMeta();
+  return {
+    serverName: meta.guild?.name || 'Discord SEO Mirror',
+    serverIconUrl: meta.guild?.iconUrl
+  };
+}
+
 export async function getChannelNav() {
   const idx = await readIndex();
-  return idx.map((c) => ({ id: c.id, name: c.name, slug: c.slug, count: c.totalMessages, totalPages: c.totalPages }));
+  const meta = await readMeta();
+  const byId = new Map(idx.map((c) => [c.id, c]));
+
+  const ordered: Array<any> = [];
+
+  for (const cat of meta.nav?.categories || []) {
+    for (const ch of cat.channels || []) {
+      const found = byId.get(ch.id);
+      if (!found) continue;
+      ordered.push({
+        id: found.id,
+        name: found.name,
+        slug: found.slug,
+        count: found.totalMessages,
+        totalPages: found.totalPages,
+        category: cat.name
+      });
+    }
+  }
+
+  for (const ch of meta.nav?.uncategorized || []) {
+    const found = byId.get(ch.id);
+    if (!found) continue;
+    ordered.push({
+      id: found.id,
+      name: found.name,
+      slug: found.slug,
+      count: found.totalMessages,
+      totalPages: found.totalPages,
+      category: null
+    });
+  }
+
+  if (ordered.length) return ordered;
+  return idx.map((c) => ({ id: c.id, name: c.name, slug: c.slug, count: c.totalMessages, totalPages: c.totalPages, category: null }));
 }
 
 export async function getDiscussions(): Promise<DiscussionLike[]> {
@@ -98,6 +157,7 @@ export async function getChannelPage(channelId: string, pageNumber: number) {
       replyTo?: {
         id: string;
         author?: string;
+        avatarUrl?: string;
         content?: string;
       };
       thread?: {
@@ -131,6 +191,12 @@ export async function getThreadById(threadId: string) {
         url?: string;
         fields?: Array<{ name?: string; value?: string }>;
       }>;
+      replyTo?: {
+        id: string;
+        author?: string;
+        avatarUrl?: string;
+        content?: string;
+      };
     }>;
   };
 }

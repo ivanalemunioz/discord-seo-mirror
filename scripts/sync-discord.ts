@@ -4,6 +4,7 @@ import path from 'node:path';
 const API = 'https://discord.com/api/v10';
 const DATA_DIR = path.resolve('src/data/channels');
 const THREADS_DIR = path.resolve('src/data/threads');
+const META_FILE = path.resolve('src/data/meta.json');
 const STATE_FILE = path.resolve('.cache/sync-state.json');
 const PAGE_SIZE = 100;
 
@@ -11,7 +12,15 @@ type Channel = {
   id: string;
   name: string;
   type: number;
+  position?: number;
+  parent_id?: string | null;
   permission_overwrites?: { id: string; type: number; allow: string; deny: string }[];
+};
+
+type Guild = {
+  id: string;
+  name: string;
+  icon?: string | null;
 };
 
 type DiscordMessage = {
@@ -306,6 +315,42 @@ async function writeIndex(items: Array<{ id: string; name: string; slug: string;
   await fs.writeFile(path.join(DATA_DIR, 'index.json'), JSON.stringify(items, null, 2), 'utf8');
 }
 
+function guildIconUrl(guild: Guild) {
+  if (!guild.icon) return undefined;
+  return `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=128`;
+}
+
+async function writeMeta(guild: Guild, channels: Channel[], included: Channel[]) {
+  const includedIds = new Set(included.map((c) => c.id));
+  const categories = channels.filter((c) => c.type === 4).sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+  const textLike = channels
+    .filter((c) => includedIds.has(c.id))
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+
+  const nav = {
+    categories: categories.map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+      channels: textLike
+        .filter((c) => c.parent_id === cat.id)
+        .map((c) => ({ id: c.id, name: c.name, position: c.position ?? 0 }))
+    })).filter((cat) => cat.channels.length > 0),
+    uncategorized: textLike
+      .filter((c) => !c.parent_id)
+      .map((c) => ({ id: c.id, name: c.name, position: c.position ?? 0 }))
+  };
+
+  await fs.mkdir(path.dirname(META_FILE), { recursive: true });
+  await fs.writeFile(META_FILE, JSON.stringify({
+    guild: {
+      id: guild.id,
+      name: guild.name,
+      iconUrl: guildIconUrl(guild)
+    },
+    nav
+  }, null, 2), 'utf8');
+}
+
 async function writeThread(threadId: string, payload: { id: string; name: string; parentChannelId: string; messages: StoredMessage[] }) {
   await fs.mkdir(THREADS_DIR, { recursive: true });
   await fs.writeFile(path.join(THREADS_DIR, `${threadId}.json`), JSON.stringify(payload), 'utf8');
@@ -315,8 +360,11 @@ async function main() {
   const state = await readState();
   await fs.mkdir(DATA_DIR, { recursive: true });
 
+  const guild = await api<Guild>(`/guilds/${env.guildId}`);
   const channels = await api<Channel[]>(`/guilds/${env.guildId}/channels`);
   const included = channels.filter(isPublicChannel);
+
+  await writeMeta(guild, channels, included);
 
   console.log(`Channels detected: ${channels.length}, included as public: ${included.length}`);
 

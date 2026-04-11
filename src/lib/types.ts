@@ -3,4 +3,6 @@ export type NavChannel = {
   name: string;
   slug: string;
   count: number;
+  totalPages?: number;
+  category?: string | null;
 };
