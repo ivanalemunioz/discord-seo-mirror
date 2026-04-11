@@ -40,11 +40,7 @@ function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>
     <article id="message-root" class={`mt-24 ${hasInvite ? 'pb-16' : 'pb-4'}`}>
       {!pageData || !pageData.messages?.length ? (
         <p class="text-muted">{t('noMessagesYet')}</p>
-      ) : (
-        <div class="mb-4 flex items-center justify-center">
-          {olderHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={olderHref}>↑ {t('oldMessages')}</a> : <span class="text-muted text-sm">{t('oldestPage')}</span>}
-        </div>
-      )}
+      ) : null}
 
       {!pageData || !pageData.messages?.length ? null : isForum ? (
         <div class="space-y-3">
@@ -68,11 +64,6 @@ function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>
         </>
       )}
 
-      {pageData && pageData.messages?.length ? (
-        <div class="mt-6 flex items-center justify-center">
-          <span class="text-muted text-sm">{t('alreadyNewest')}</span>
-        </div>
-      ) : null}
     </article>
 
     <script>
