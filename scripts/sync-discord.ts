@@ -175,7 +175,12 @@ function extractEmbeds(m: DiscordMessage): StoredEmbed[] {
   })).filter((e) => e.title || e.description || e.url || (e.fields && e.fields.length));
 }
 
+function isUserMessage(m: DiscordMessage) {
+  return m.type === 0;
+}
+
 function hasVisibleContent(m: DiscordMessage) {
+  if (!isUserMessage(m)) return false;
   return Boolean(
     cleanContent(m.content || '') ||
     (m.attachments && m.attachments.length > 0) ||
