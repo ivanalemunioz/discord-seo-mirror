@@ -1,92 +1,176 @@
 # Discord SEO Mirror
 
-Production-ready Astro project that mirrors **public-by-default Discord community content** into static, SEO-friendly pages deployable on GitHub Pages.
+Static Astro site that mirrors **public Discord community content** into crawlable web pages.
+
+## What it does
+
+- Syncs Discord content via **official Discord API** (bot token)
+- Mirrors public text channels + forum channels + threads
+- Builds static pages optimized for SEO
+- Deploys to GitHub Pages via GitHub Actions
+
+---
+
+## Current routes
+
+- `/` → Channels (main entry)
+- `/channels/:slug` → channel latest page
+- `/channels/:slug/page/:n` → channel history pages
+- `/threads/:id` → thread view
+
+> `/latest` and `/search` are intentionally removed.
+
+---
 
 ## Stack
 
 - Astro + TypeScript
 - Tailwind CSS
-- shadcn-style UI primitives (React components)
-- Discord official REST API (bot token)
+- Discord REST API
 - GitHub Actions + GitHub Pages
 
-## Public-by-default policy
+---
 
-Default behavior:
+## Public-by-default mirroring policy
 
-- ✅ Include channels readable by the default community audience
-- ✅ Include public forum channels and public threads
-- ✅ Include normal public text channels
-- ❌ Exclude channels denied to `@everyone` (staff/mod/admin/private)
+Default include:
+- channels readable by the general community
+- public forum channels + public threads
+- normal community channels
 
-The sync logic checks channel permission overwrites for the guild default role (`@everyone` = guild ID). If `VIEW_CHANNEL` or `READ_MESSAGE_HISTORY` is denied, the channel is excluded.
+Default exclude:
+- staff/mod/admin/private channels
+- role-gated channels not readable by default audience
 
-### Overrides
+Override options:
+- `SYNC_INCLUDE_CHANNEL_IDS`
+- `SYNC_EXCLUDE_CHANNEL_IDS`
 
-- `SYNC_INCLUDE_CHANNEL_IDS`: force include comma-separated IDs
-- `SYNC_EXCLUDE_CHANNEL_IDS`: force exclude comma-separated IDs
-
-Include/exclude overrides always win over auto-detection.
+---
 
 ## Setup
 
-1. Create Discord bot in Developer Portal.
-2. Enable **Server Members Intent** only if you later extend member-based features (not required for MVP).
-3. Invite bot with minimum scopes/permissions:
-   - `bot`
-   - View Channels
-   - Read Message History
-4. Copy `.env.example` to `.env` and set values.
-
 ```bash
 npm install
+cp .env.example .env
+# fill .env values
 npm run sync
 npm run dev
 ```
 
-## Build/deploy
+### Environment variables
+
+Required:
+- `DISCORD_BOT_TOKEN`
+- `DISCORD_GUILD_ID`
+- `SITE_URL`
+- `PUBLIC_BASE_URL`
+
+Optional:
+- `PUBLIC_DISCORD_INVITE_URL`
+- `SITE_LANG` (`en` default, `es` supported)
+- `SYNC_INCLUDE_CHANNEL_IDS`
+- `SYNC_EXCLUDE_CHANNEL_IDS`
+- `SYNC_MAX_MESSAGES_PER_CHANNEL`
+
+---
+
+## How to create the Discord bot + token
+
+1. Open Discord Developer Portal: https://discord.com/developers/applications
+2. Click **New Application**
+3. Go to **Bot** (left menu)
+4. Click **Add Bot**
+5. In **Bot** page:
+   - Copy token (or Reset Token then copy)
+   - This value is `DISCORD_BOT_TOKEN`
+
+### Bot permissions/scopes
+
+In **OAuth2 → URL Generator**:
+- Scopes: `bot`
+- Bot Permissions:
+  - View Channels
+  - Read Message History
+
+Open generated URL and invite bot to your server.
+
+---
+
+## How to get Discord server (guild) ID
+
+1. In Discord app: **User Settings → Advanced → Developer Mode ON**
+2. Right-click server icon/name
+3. Click **Copy Server ID**
+4. Use it as `DISCORD_GUILD_ID`
+
+---
+
+## How to create a Discord invite URL (for footer CTA)
+
+1. In your Discord server, click server name → **Invite People**
+2. Create/copy invite link
+3. Put it in `.env`:
+
+```env
+PUBLIC_DISCORD_INVITE_URL=https://discord.gg/your-invite
+```
+
+If this env var is missing, the footer composer CTA is hidden.
+
+---
+
+## Sync behavior
+
+- Uses Discord API pagination (`before` / `after`)
+- Stores channel pages as JSON arrays of messages
+- Includes embed messages and reply-type messages
+- Ingests forum threads and stores them in `src/data/threads/*.json`
+
+---
+
+## Build and deploy
+
+### Local build
 
 ```bash
 npm run build
 ```
 
-Deploy uses `.github/workflows/deploy.yml` and runs on:
+### GitHub Pages
+
+Workflow: `.github/workflows/deploy.yml`
+
+Runs on:
 - push to `main`
 - manual dispatch
-- daily cron (`0 6 * * *`)
+- daily cron
 
-## GitHub configuration steps
+### GitHub repo settings
 
-1. Push repo to GitHub.
-2. In **Settings → Pages**, Source = **GitHub Actions**.
-3. Add repo secrets:
+1. Settings → Pages → Source: **GitHub Actions**
+2. Add secrets:
    - `DISCORD_BOT_TOKEN`
    - `DISCORD_GUILD_ID`
-4. Add repo variables:
+3. Add variables:
    - `SITE_URL`
    - `PUBLIC_BASE_URL`
-   - optional include/exclude vars
+   - optional sync overrides
 
-## Site structure
+---
 
-- `/` Home + latest discussions
-- `/latest`
-- `/channels`
-- `/channels/:slug`
-- `/community/:slug`
-- `/search`
-
-## SEO defaults
+## SEO
 
 - Canonical URLs
-- Open Graph metadata
+- Open Graph tags
 - `robots.txt`
-- sitemap (via `@astrojs/sitemap`)
-- structured internal links (channels + related discussions)
+- `sitemap.xml`/`sitemap-index.xml` via `@astrojs/sitemap`
+- Static fast pages
 
-## Privacy + limitations
+---
 
-- Uses official Discord API only (no scraping, no selfbot).
-- Mirrors only content deemed public by channel permission rules.
-- Attachment links point to original Discord CDN URLs.
-- Message grouping for text channels is batch-based; you can extend to thread-first models per community structure.
+## Notes
+
+- Official API only (no scraping/selfbot)
+- Designed for static hosting
+- Some Discord dynamic UI behavior is approximated in static pages
