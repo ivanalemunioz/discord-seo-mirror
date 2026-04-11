@@ -30,7 +30,7 @@ type DiscussionLike = {
 };
 
 type Meta = {
-  guild?: { id: string; name: string; iconUrl?: string };
+  guild?: { id: string; name: string; iconUrl?: string; rulesChannelId?: string | null; updatesChannelId?: string | null };
   nav?: {
     categories: Array<{ id: string; name: string; channels: Array<{ id: string; name: string; position: number }> }>;
     uncategorized: Array<{ id: string; name: string; position: number }>;
@@ -57,7 +57,9 @@ export async function getSiteMeta() {
   const meta = await readMeta();
   return {
     serverName: meta.guild?.name || 'Discord SEO Mirror',
-    serverIconUrl: meta.guild?.iconUrl
+    serverIconUrl: meta.guild?.iconUrl,
+    rulesChannelId: meta.guild?.rulesChannelId || null,
+    updatesChannelId: meta.guild?.updatesChannelId || null
   };
 }
 
@@ -79,7 +81,8 @@ export async function getChannelNav() {
         count: found.totalMessages,
         totalPages: found.totalPages,
         category: cat.name,
-        channelType: found.channelType
+        channelType: found.channelType,
+        iconKind: found.channelType === 15 ? 'forum' : (found.id === meta.guild?.rulesChannelId ? 'rules' : (found.id === meta.guild?.updatesChannelId ? 'updates' : 'text'))
       });
     }
   }
@@ -94,12 +97,13 @@ export async function getChannelNav() {
       count: found.totalMessages,
       totalPages: found.totalPages,
       category: null,
-      channelType: found.channelType
+      channelType: found.channelType,
+      iconKind: found.channelType === 15 ? 'forum' : (found.id === meta.guild?.rulesChannelId ? 'rules' : (found.id === meta.guild?.updatesChannelId ? 'updates' : 'text'))
     });
   }
 
   if (ordered.length) return ordered;
-  return idx.map((c) => ({ id: c.id, name: c.name, slug: c.slug, count: c.totalMessages, totalPages: c.totalPages, category: null, channelType: c.channelType }));
+  return idx.map((c) => ({ id: c.id, name: c.name, slug: c.slug, count: c.totalMessages, totalPages: c.totalPages, category: null, channelType: c.channelType, iconKind: c.channelType === 15 ? 'forum' : 'text' }));
 }
 
 export async function getDiscussions(): Promise<DiscussionLike[]> {

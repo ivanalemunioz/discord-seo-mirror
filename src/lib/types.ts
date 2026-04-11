@@ -6,4 +6,5 @@ export type NavChannel = {
   totalPages?: number;
   category?: string | null;
   channelType?: number;
+  iconKind?: 'text' | 'forum' | 'rules' | 'updates';
 };

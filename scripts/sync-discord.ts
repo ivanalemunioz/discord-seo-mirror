@@ -21,6 +21,8 @@ type Guild = {
   id: string;
   name: string;
   icon?: string | null;
+  rules_channel_id?: string | null;
+  public_updates_channel_id?: string | null;
 };
 
 type ForumThread = {
@@ -350,7 +352,9 @@ async function writeMeta(guild: Guild, channels: Channel[], included: Channel[])
     guild: {
       id: guild.id,
       name: guild.name,
-      iconUrl: guildIconUrl(guild)
+      iconUrl: guildIconUrl(guild),
+      rulesChannelId: guild.rules_channel_id || null,
+      updatesChannelId: guild.public_updates_channel_id || null
     },
     nav
   }, null, 2), 'utf8');
