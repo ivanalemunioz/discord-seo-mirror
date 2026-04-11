@@ -12,7 +12,7 @@ for (const c of channels) {
 }
 ---
 
-<MainLayout title={t('home')} description="Channel list" channels={channels}>
+<MainLayout title={t('channels')} description="Channel list" channels={channels}>
   <h1 class="text-2xl font-semibold">{t('channels')}</h1>
 
   {[...grouped.entries()].map(([cat, list]) => (
