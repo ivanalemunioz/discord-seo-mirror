@@ -19,7 +19,7 @@ type DiscordMessage = {
   content: string;
   timestamp: string;
   edited_timestamp: string | null;
-  author?: { username?: string; global_name?: string };
+  author?: { id?: string; username?: string; global_name?: string; avatar?: string; discriminator?: string };
   attachments?: { url: string; filename: string }[];
   type: number;
   message_reference?: { message_id?: string };
@@ -52,6 +52,7 @@ type StoredEmbed = {
 type StoredMessage = {
   id: string;
   author: string;
+  authorAvatarUrl?: string;
   timestamp: string;
   editedAt?: string | null;
   content: string;
@@ -189,6 +190,15 @@ function hasVisibleContent(m: DiscordMessage) {
   );
 }
 
+function authorAvatarUrl(author?: DiscordMessage['author']) {
+  if (!author?.id) return undefined;
+  if (author.avatar) {
+    const ext = author.avatar.startsWith('a_') ? 'gif' : 'png';
+    return `https://cdn.discordapp.com/avatars/${author.id}/${author.avatar}.${ext}?size=64`;
+  }
+  return `https://cdn.discordapp.com/embed/avatars/${Number(author.discriminator || 0) % 5}.png`;
+}
+
 function toStoredMessage(m: DiscordMessage, threads: Map<string, ThreadSummary>): StoredMessage {
   const replyId = m.message_reference?.message_id || m.referenced_message?.id;
   const threadId = m.thread?.id;
@@ -200,6 +210,7 @@ function toStoredMessage(m: DiscordMessage, threads: Map<string, ThreadSummary>)
   return {
     id: m.id,
     author: m.author?.global_name || m.author?.username || 'unknown',
+    authorAvatarUrl: authorAvatarUrl(m.author),
     timestamp: m.timestamp,
     editedAt: m.edited_timestamp,
     content,
@@ -343,6 +354,7 @@ async function main() {
             .map((m) => ({
               id: m.id,
               author: m.author?.global_name || m.author?.username || 'unknown',
+              authorAvatarUrl: authorAvatarUrl(m.author),
               timestamp: m.timestamp,
               editedAt: m.edited_timestamp,
               content: cleanContent(m.content || ''),

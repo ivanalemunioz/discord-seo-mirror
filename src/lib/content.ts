@@ -84,6 +84,7 @@ export async function getChannelPage(channelId: string, pageNumber: number) {
     messages: Array<{
       id: string;
       author: string;
+      authorAvatarUrl?: string;
       timestamp: string;
       editedAt?: string | null;
       content: string;
@@ -119,6 +120,7 @@ export async function getThreadById(threadId: string) {
     messages: Array<{
       id: string;
       author: string;
+      authorAvatarUrl?: string;
       timestamp: string;
       editedAt?: string | null;
       content: string;
