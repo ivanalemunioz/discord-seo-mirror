@@ -114,10 +114,10 @@ function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>
     {hasInvite ? (
       <div class="fixed bottom-0 left-0 right-0 lg:left-[280px] z-30 group bg-background/95 border-t border-line">
         <div class="p-3 lg:px-6">
-          <div class="flex items-center gap-2 bg-surface border border-line rounded-lg px-3 py-2 text-sm text-muted pointer-events-none">
+          <a href={inviteUrl} target="_blank" rel="noreferrer" class="flex items-center gap-2 bg-surface border border-line rounded-lg px-3 py-2 text-sm text-muted hover:border-blurple hover:text-text transition-colors">
             <span class="flex-1">Write a message...</span>
-            <button class="h-8 px-3 rounded-md bg-panel border border-line text-slate-300 pointer-events-none">Send</button>
-          </div>
+            <span class="h-8 px-3 rounded-md bg-panel border border-line text-slate-300 inline-flex items-center">Send</span>
+          </a>
           <a href={inviteUrl} target="_blank" rel="noreferrer" class="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-panel border border-line rounded-md px-3 py-1 text-xs text-slate-200 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity">
             Join to the community
           </a>
