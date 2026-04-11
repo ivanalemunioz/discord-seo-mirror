@@ -2,23 +2,27 @@
 
 Static Astro site that mirrors **public Discord community content** into crawlable web pages.
 
+## Index
+
+- [What it does](#what-it-does)
+- [Stack](#stack)
+- [Public-by-default mirroring policy](#public-by-default-mirroring-policy)
+- [Setup](#setup)
+- [Environment variables](#environment-variables)
+- [How to create the Discord bot + token](#how-to-create-the-discord-bot--token)
+- [How to get Discord server (guild) ID](#how-to-get-discord-server-guild-id)
+- [How to create a Discord invite URL (for footer CTA)](#how-to-create-a-discord-invite-url-for-footer-cta)
+- [Sync behavior](#sync-behavior)
+- [Build and deploy](#build-and-deploy)
+- [SEO](#seo)
+- [Notes](#notes)
+
 ## What it does
 
 - Syncs Discord content via **official Discord API** (bot token)
 - Mirrors public text channels + forum channels + threads
 - Builds static pages optimized for SEO
 - Deploys to GitHub Pages via GitHub Actions
-
----
-
-## Current routes
-
-- `/` → Channels (main entry)
-- `/channels/:slug` → channel latest page
-- `/channels/:slug/page/:n` → channel history pages
-- `/threads/:id` → thread view
-
-> `/latest` and `/search` are intentionally removed.
 
 ---
 
