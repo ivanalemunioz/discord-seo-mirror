@@ -26,7 +26,7 @@ type DiscordMessage = {
   referenced_message?: {
     id?: string;
     content?: string;
-    author?: { username?: string; global_name?: string };
+    author?: { id?: string; username?: string; global_name?: string; avatar?: string; discriminator?: string };
   } | null;
   thread?: {
     id: string;
@@ -61,6 +61,7 @@ type StoredMessage = {
   replyTo?: {
     id: string;
     author?: string;
+    avatarUrl?: string;
     content?: string;
   };
   thread?: {
@@ -220,6 +221,7 @@ function toStoredMessage(m: DiscordMessage, threads: Map<string, ThreadSummary>)
       ? {
           id: replyId,
           author: m.referenced_message?.author?.global_name || m.referenced_message?.author?.username,
+          avatarUrl: authorAvatarUrl(m.referenced_message?.author),
           content: cleanContent(m.referenced_message?.content || '').slice(0, 160)
         }
       : undefined,
