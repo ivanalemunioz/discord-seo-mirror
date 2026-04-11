@@ -14,6 +14,7 @@ const { id } = Astro.params;
 const channels = await getChannelNav();
 const thread = id ? await getThreadById(id) : null;
 const parent = channels.find((c) => c.id === thread?.parentChannelId);
+const inviteUrl = process.env.DISCORD_INVITE_URL || '#';
 
 function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>, i: number) {
   const prev = messages[i - 1];
@@ -35,9 +36,18 @@ function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>
         <h1 class="text-xl md:text-2xl font-semibold">{thread.name}</h1>
       </header>
 
-      <article id="message-root" class="mt-24">
+      <article id="message-root" class="mt-24 pb-24">
         {thread.messages.map((m, i) => <MessageItem message={m} showAuthor={shouldShowAuthor(thread.messages, i)} />)}
       </article>
+
+      <div class="fixed bottom-4 left-4 right-4 lg:left-[304px] lg:right-8 z-30 group">
+        <div class="bg-surface border border-line rounded-lg px-4 py-3 text-sm text-muted text-center hover:border-blurple transition-colors">
+          Write a message...
+        </div>
+        <a href={inviteUrl} target="_blank" rel="noreferrer" class="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-panel border border-line rounded-md px-3 py-1 text-xs text-slate-200 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity">
+          Join to the community
+        </a>
+      </div>
     </section>
   ) : (
     <p class="text-muted mt-4">{t('threadNotFound')}</p>

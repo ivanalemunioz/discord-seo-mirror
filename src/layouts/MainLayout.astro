@@ -13,7 +13,7 @@ interface Props {
 const { title, description = 'Public Discord discussions mirrored for search.', channels = [] } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const siteMeta = await getSiteMeta();
-const fullTitle = `${title} - ${siteMeta.serverName}`;
+const fullTitle = `${title} - ${siteMeta.serverName} Discord community`;
 
 const groups = new Map<string, NavChannel[]>();
 for (const channel of channels) {

@@ -160,6 +160,7 @@ export async function getChannelPage(channelId: string, pageNumber: number) {
           author?: string;
           avatarUrl?: string;
           content?: string;
+          href?: string;
         };
         thread?: {
           id: string;
@@ -173,6 +174,31 @@ export async function getChannelPage(channelId: string, pageNumber: number) {
   } catch {
     return null;
   }
+}
+
+export async function getMessagePageMap(channelId: string) {
+  const map = new Map<string, number>();
+  const dir = path.join(DATA_DIR, channelId);
+  let files: string[] = [];
+  try {
+    files = (await fs.readdir(dir)).filter((f) => f.endsWith('.json')).sort();
+  } catch {
+    return map;
+  }
+
+  for (const f of files) {
+    const m = f.match(/page-(\d+)\.json$/);
+    if (!m) continue;
+    const page = Number(m[1]);
+    try {
+      const payload = JSON.parse(await fs.readFile(path.join(dir, f), 'utf8')) as { messages: Array<{ id: string }> };
+      for (const msg of payload.messages || []) map.set(msg.id, page);
+    } catch {
+      // ignore
+    }
+  }
+
+  return map;
 }
 
 export async function getThreadById(threadId: string) {
@@ -200,6 +226,7 @@ export async function getThreadById(threadId: string) {
         author?: string;
         avatarUrl?: string;
         content?: string;
+        href?: string;
       };
     }>;
   };

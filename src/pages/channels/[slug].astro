@@ -2,7 +2,7 @@
 import MainLayout from '@/layouts/MainLayout.astro';
 import Breadcrumbs from '@/components/Breadcrumbs.astro';
 import MessageItem from '@/components/MessageItem.astro';
-import { getChannelNav, getChannelPage } from '@/lib/content';
+import { getChannelNav, getChannelPage, getMessagePageMap } from '@/lib/content';
 import { t } from '@/lib/i18n';
 
 export async function getStaticPaths() {
@@ -15,6 +15,8 @@ const channels = await getChannelNav();
 const channel = channels.find((c) => c.slug === slug);
 const currentPage = channel?.totalPages || 1;
 const pageData = channel ? await getChannelPage(channel.id, currentPage) : null;
+const messagePageMap = channel ? await getMessagePageMap(channel.id) : new Map<string, number>();
+const inviteUrl = process.env.DISCORD_INVITE_URL || '#';
 
 const olderHref = currentPage > 1 ? `/channels/${slug}/page/${currentPage - 1}` : null;
 
@@ -34,12 +36,18 @@ function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>
         <h1 class="text-xl md:text-2xl font-semibold"># {channel.name}</h1>
       </header>
 
-      <article id="message-root" class="mt-24">
+      <article id="message-root" class="mt-24 pb-24">
         <div class="mb-4 flex items-center justify-center">
           {olderHref ? <a class="text-sm text-blue-300 hover:text-blue-200" href={olderHref}>↑ {t('oldMessages')}</a> : <span class="text-muted text-sm">{t('oldestPage')}</span>}
         </div>
 
-        {pageData.messages.map((m, i) => <MessageItem message={m} showAuthor={shouldShowAuthor(pageData.messages, i)} />)}
+        {pageData.messages.map((m, i) => {
+          const targetPage = m.replyTo?.id ? messagePageMap.get(m.replyTo.id) : undefined;
+          const msg = targetPage
+            ? { ...m, replyTo: { ...m.replyTo, href: targetPage === currentPage ? `#m-${m.replyTo?.id}` : `/channels/${slug}/page/${targetPage}#m-${m.replyTo?.id}` } }
+            : m;
+          return <MessageItem message={msg} showAuthor={shouldShowAuthor(pageData.messages, i)} />;
+        })}
 
         <div class="mt-6 flex items-center justify-center">
           <span class="text-muted text-sm">{t('alreadyNewest')}</span>
@@ -60,6 +68,8 @@ function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>
         requestAnimationFrame(() => {
           if (location.hash) {
             focusMessage(location.hash.slice(1));
+          } else if (new URLSearchParams(location.search).get('top') === '1') {
+            window.scrollTo({ top: 0, behavior: 'auto' });
           } else {
             window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' });
           }
@@ -79,6 +89,15 @@ function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>
           focusMessage(location.hash.slice(1));
         });
       </script>
+
+      <div class="fixed bottom-4 left-4 right-4 lg:left-[304px] lg:right-8 z-30 group">
+        <div class="bg-surface border border-line rounded-lg px-4 py-3 text-sm text-muted text-center hover:border-blurple transition-colors">
+          Write a message...
+        </div>
+        <a href={inviteUrl} target="_blank" rel="noreferrer" class="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-panel border border-line rounded-md px-3 py-1 text-xs text-slate-200 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity">
+          Join to the community
+        </a>
+      </div>
     </section>
   ) : (
     <p class="text-muted mt-4">{t('noMessagesYet')}</p>
