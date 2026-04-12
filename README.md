@@ -73,7 +73,6 @@ Required:
 - `DISCORD_BOT_TOKEN`
 - `DISCORD_GUILD_ID`
 - `SITE_URL`
-- `PUBLIC_BASE_URL`
 
 Optional:
 - `PUBLIC_DISCORD_INVITE_URL`
@@ -165,7 +164,6 @@ Runs on:
    - `DISCORD_GUILD_ID`
 3. Add variables:
    - `SITE_URL`
-   - `PUBLIC_BASE_URL`
    - optional sync overrides
 
 ---
