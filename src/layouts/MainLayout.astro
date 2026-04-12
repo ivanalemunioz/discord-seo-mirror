@@ -19,6 +19,7 @@ const inviteUrl = import.meta.env.PUBLIC_DISCORD_INVITE_URL || '';
 const hasInvite = Boolean(inviteUrl);
 const fullTitle = `${title} - ${siteMeta.serverName} Discord community`;
 const currentPath = Astro.url.pathname;
+const membersLabel = siteMeta.memberCount ? `${siteMeta.memberCount.toLocaleString()} members` : null;
 
 const isChannelActive = (slug: string, id: string) => {
   if (activeChannelId) return activeChannelId === id;
@@ -54,7 +55,7 @@ for (const channel of channels) {
           {siteMeta.serverIconUrl ? <img src={siteMeta.serverIconUrl} alt={siteMeta.serverName} class="h-6 w-6 rounded-full" /> : null}
           <span>{siteMeta.serverName}</span>
         </a>
-        <p class="text-muted text-sm mt-1">{t('discordCommunity')}</p>
+        <p class="text-muted text-sm mt-1">{t('discordCommunity')}{membersLabel ? ` · ${membersLabel}` : ''}</p>
         <nav class="mt-6 space-y-1">
 
           {[...groups.entries()].map(([cat, list]) => (

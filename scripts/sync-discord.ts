@@ -23,6 +23,7 @@ type Guild = {
   icon?: string | null;
   rules_channel_id?: string | null;
   public_updates_channel_id?: string | null;
+  approximate_member_count?: number;
 };
 
 type ForumThread = {
@@ -354,7 +355,8 @@ async function writeMeta(guild: Guild, channels: Channel[], included: Channel[])
       name: guild.name,
       iconUrl: guildIconUrl(guild),
       rulesChannelId: guild.rules_channel_id || null,
-      updatesChannelId: guild.public_updates_channel_id || null
+      updatesChannelId: guild.public_updates_channel_id || null,
+      memberCount: guild.approximate_member_count || null
     },
     nav
   }, null, 2), 'utf8');
@@ -389,7 +391,7 @@ async function main() {
   const state = await readState();
   await fs.mkdir(DATA_DIR, { recursive: true });
 
-  const guild = await api<Guild>(`/guilds/${env.guildId}`);
+  const guild = await api<Guild>(`/guilds/${env.guildId}?with_counts=true`);
   const channels = await api<Channel[]>(`/guilds/${env.guildId}/channels`);
   const included = channels.filter(isPublicChannel);
 

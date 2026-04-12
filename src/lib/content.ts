@@ -30,7 +30,7 @@ type DiscussionLike = {
 };
 
 type Meta = {
-  guild?: { id: string; name: string; iconUrl?: string; rulesChannelId?: string | null; updatesChannelId?: string | null };
+  guild?: { id: string; name: string; iconUrl?: string; rulesChannelId?: string | null; updatesChannelId?: string | null; memberCount?: number | null };
   nav?: {
     categories: Array<{ id: string; name: string; channels: Array<{ id: string; name: string; position: number }> }>;
     uncategorized: Array<{ id: string; name: string; position: number }>;
@@ -59,7 +59,8 @@ export async function getSiteMeta() {
     serverName: meta.guild?.name || 'Discord SEO Mirror',
     serverIconUrl: meta.guild?.iconUrl,
     rulesChannelId: meta.guild?.rulesChannelId || null,
-    updatesChannelId: meta.guild?.updatesChannelId || null
+    updatesChannelId: meta.guild?.updatesChannelId || null,
+    memberCount: meta.guild?.memberCount || null
   };
 }
 
