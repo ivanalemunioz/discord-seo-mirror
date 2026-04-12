@@ -56,6 +56,11 @@ for (const channel of channels) {
           <span>{siteMeta.serverName}</span>
         </a>
         <p class="text-muted text-sm mt-1">{t('discordCommunity')}{membersLabel ? ` · ${membersLabel}` : ''}</p>
+        {hasInvite ? (
+          <a href={inviteUrl} target="_blank" rel="noreferrer" class="mt-3 inline-flex items-center justify-center rounded-md bg-blurple px-3 py-2 text-sm font-medium text-white hover:opacity-95">
+            Join to the community
+          </a>
+        ) : null}
         <nav class="mt-6 space-y-1">
 
           {[...groups.entries()].map(([cat, list]) => (
