@@ -82,7 +82,8 @@ for (const channel of channels) {
 
     {hasInvite ? (
       <div id="invite-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4">
-        <div class="w-full max-w-xl rounded-2xl border border-line bg-surface p-6 text-center shadow-2xl">
+        <div id="invite-modal-card" class="relative w-full max-w-xl rounded-2xl border border-line bg-surface p-6 text-center shadow-2xl">
+          <button id="invite-x-btn" class="absolute right-3 top-3 h-8 w-8 rounded-md border border-line bg-panel text-slate-300 hover:text-white">✕</button>
           {siteMeta.serverIconUrl ? <img src={siteMeta.serverIconUrl} alt={siteMeta.serverName} class="mx-auto h-20 w-20 rounded-2xl" /> : null}
           <p class="mt-4 text-lg text-slate-200">Join</p>
           <h2 class="text-4xl font-bold mt-1">{siteMeta.serverName}</h2>
@@ -112,7 +113,9 @@ for (const channel of channels) {
 
       const modal = document.getElementById('invite-modal');
       const closeBtn = document.getElementById('invite-close-btn');
+      const xBtn = document.getElementById('invite-x-btn');
       const joinBtn = document.getElementById('invite-join-btn');
+      const card = document.getElementById('invite-modal-card');
       const dismissedKey = 'discord_invite_modal_dismissed_v1';
 
       if (modal && !localStorage.getItem(dismissedKey)) {
@@ -121,7 +124,7 @@ for (const channel of channels) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
           }
-        }, 5 * 60 * 1000);
+        }, 5 * 1000);
 
         const dismiss = () => {
           localStorage.setItem(dismissedKey, '1');
@@ -130,7 +133,11 @@ for (const channel of channels) {
         };
 
         closeBtn?.addEventListener('click', dismiss);
+        xBtn?.addEventListener('click', dismiss);
         joinBtn?.addEventListener('click', dismiss);
+        modal.addEventListener('click', (ev) => {
+          if (card && !card.contains(ev.target)) dismiss();
+        });
       }
     </script>
   </body>
