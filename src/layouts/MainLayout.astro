@@ -82,12 +82,13 @@ for (const channel of channels) {
     </div>
 
     {hasInvite ? (
-      <div id="invite-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4">
-        <div id="invite-modal-card" class="relative w-full max-w-xl rounded-2xl border border-line bg-surface p-6 text-center shadow-2xl">
+      <div id="invite-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4 cursor-pointer">
+        <div id="invite-modal-card" class="relative w-full max-w-xl rounded-2xl border border-line bg-surface p-6 text-center shadow-2xl cursor-default">
           <button id="invite-x-btn" class="absolute right-3 top-3 h-8 w-8 rounded-md border border-line bg-panel text-slate-300 hover:text-white">✕</button>
           {siteMeta.serverIconUrl ? <img src={siteMeta.serverIconUrl} alt={siteMeta.serverName} class="mx-auto h-20 w-20 rounded-2xl" /> : null}
           <p class="mt-4 text-lg text-slate-200">Join</p>
           <h2 class="text-4xl font-bold mt-1">{siteMeta.serverName}</h2>
+          {membersLabel ? <p class="mt-1 text-sm text-muted">{membersLabel}</p> : null}
           <a id="invite-join-btn" href={inviteUrl} target="_blank" rel="noreferrer" class="mt-6 block w-full rounded-xl bg-blurple px-4 py-3 text-lg font-semibold text-white hover:opacity-95">
             Join the community
           </a>
