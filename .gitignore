@@ -3,3 +3,8 @@ dist
 .astro
 .cache
 .env
+
+# generated sync data (server-specific)
+src/data/channels/
+src/data/threads/
+src/data/meta.json
