@@ -2,6 +2,9 @@
 
 Static Astro site that mirrors **public Discord community content** into crawlable web pages.
 
+<img width="2880" height="1342" alt="imagen" src="https://github.com/user-attachments/assets/6846e415-d081-4ae7-8791-777fc8f3b2f9" />
+
+
 ## Index
 
 - [What it does](#what-it-does)
