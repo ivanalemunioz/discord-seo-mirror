@@ -1,0 +1,61 @@
+---
+import MainLayout from '@/layouts/MainLayout.astro';
+import Breadcrumbs from '@/components/Breadcrumbs.astro';
+import MessageItem from '@/components/MessageItem.astro';
+import { getChannelNav, getThreadById } from '@/lib/content';
+import { t } from '@/lib/i18n';
+
+export async function getStaticPaths() {
+  const files = Object.keys(import.meta.glob('/src/data/threads/*.json'));
+  return files.map((f) => ({ params: { id: f.split('/').pop()?.replace(/\.json$/, '') || '' } }));
+}
+
+const { id } = Astro.params;
+const channels = await getChannelNav();
+const thread = id ? await getThreadById(id) : null;
+const parent = channels.find((c) => c.id === thread?.parentChannelId);
+const inviteUrl = import.meta.env.PUBLIC_DISCORD_INVITE_URL || '';
+const hasInvite = Boolean(inviteUrl);
+
+function shouldShowAuthor(messages: Array<{ author: string; timestamp: string }>, i: number) {
+  const prev = messages[i - 1];
+  if (!prev) return true;
+  const withinHour = (new Date(messages[i].timestamp).getTime() - new Date(prev.timestamp).getTime()) <= 3600000;
+  const sameAuthor = prev.author === messages[i].author;
+  return !(sameAuthor && withinHour);
+}
+---
+<MainLayout title={thread ? `Thread · ${thread.name}` : 'Thread'} channels={channels} activeChannelId={parent?.id}>
+  {thread ? (
+    <section>
+      <header class="fixed top-0 left-0 right-0 lg:left-[280px] z-20 bg-background/95 backdrop-blur border-b border-line pb-3 px-4 lg:px-8 pt-4">
+        <Breadcrumbs items={[
+          { label: 'Channels', href: '/channels' },
+          { label: `#${parent?.name ?? 'channel'}`, href: parent ? `/channels/${parent.slug}` : '/channels' },
+          { label: thread.name }
+        ]} />
+        <h1 class="text-xl md:text-2xl font-semibold">{thread.name}</h1>
+      </header>
+
+      <article id="message-root" class={`mt-24 ${hasInvite ? 'pb-16' : 'pb-4'}`}>
+        {thread.messages.map((m, i) => <MessageItem message={m} showAuthor={shouldShowAuthor(thread.messages, i)} />)}
+      </article>
+
+      {hasInvite ? (
+        <div class="fixed bottom-0 left-0 right-0 lg:left-[280px] z-30 group bg-background/95 border-t border-line">
+          <div class="p-3 lg:px-6">
+            <a href={inviteUrl} target="_blank" rel="noreferrer" class="flex items-center gap-2 bg-surface border border-line rounded-lg px-3 py-2 text-sm text-muted hover:border-blurple hover:text-text transition-colors">
+              <span class="flex-1">Write a message...</span>
+              <span class="h-8 px-3 rounded-md bg-panel border border-line text-slate-300 inline-flex items-center">Send</span>
+            </a>
+            <a href={inviteUrl} target="_blank" rel="noreferrer" class="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-panel border border-line rounded-md px-3 py-1 text-xs text-slate-200 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity">
+              Join to the community
+            </a>
+          </div>
+        </div>
+      ) : null}
+    </section>
+  ) : (
+    <p class="text-muted mt-4">{t('threadNotFound')}</p>
+  )}
+</MainLayout>

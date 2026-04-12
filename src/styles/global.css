@@ -1,0 +1,72 @@
+@import 'highlight.js/styles/github-dark.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+html, body { overflow-x: hidden; }
+body { @apply bg-background text-text antialiased; }
+a { @apply text-blue-300 hover:text-blue-200; }
+.card { @apply bg-surface border border-line rounded-xl; }
+.channel-row { @apply flex items-center gap-2 px-3 py-2 rounded-md text-muted hover:bg-panel hover:text-text transition-colors; }
+
+/* Discord-like message stream formatting for markdown-rendered synced content */
+.discord-message-stream h3 {
+  @apply text-sm font-semibold text-slate-200 mt-5 mb-1;
+}
+.discord-message-stream h3:first-child {
+  @apply mt-0;
+}
+.discord-message-stream p {
+  @apply text-[15px] leading-6 text-slate-300 mt-0 mb-2;
+  white-space: pre-wrap;
+}
+
+.discord-message-stream li,
+.discord-message-stream blockquote {
+  white-space: pre-wrap;
+}
+.discord-message-stream,
+.discord-message-stream * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.discord-message-stream {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.discord-message-stream pre {
+  @apply bg-[#1b1d20] border border-line rounded-lg p-3 overflow-x-auto;
+}
+.discord-message-stream code {
+  @apply text-slate-200;
+}
+.discord-message-stream ul {
+  @apply my-2;
+}
+.discord-message-stream a {
+  @apply text-blue-300 hover:text-blue-200 underline;
+  overflow-wrap: anywhere;
+}
+.discord-message-stream img,
+.discord-message-stream video,
+.discord-message-stream iframe,
+.discord-message-stream audio {
+  max-width: 100%;
+}
+
+.message-focus-highlight {
+  background: rgba(88, 101, 242, 0.18);
+  transition: background-color .3s ease;
+}
+
+.message-row {
+  width: 100%;
+}
+.message-inner {
+}
+@media (min-width: 1024px) {
+  .message-inner {
+  }
+}

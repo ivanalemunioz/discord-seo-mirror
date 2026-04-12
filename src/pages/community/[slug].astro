@@ -1,0 +1,30 @@
+---
+import MainLayout from '@/layouts/MainLayout.astro';
+import Breadcrumbs from '@/components/Breadcrumbs.astro';
+import MessageItem from '@/components/MessageItem.astro';
+import { getDiscussions, getChannelNav, getChannelPage } from '@/lib/content';
+
+export async function getStaticPaths() {
+  const discussions = await getDiscussions();
+  return discussions.map((d) => ({ params: { slug: d.slug } }));
+}
+
+const { slug } = Astro.params;
+const channels = await getChannelNav();
+const match = slug?.match(/^(.*)-p(\d+)$/);
+const channelSlug = match?.[1];
+const pageNumber = Number(match?.[2] || '1');
+const channel = channels.find((c) => c.slug === channelSlug);
+const page = channel ? await getChannelPage(channel.id, pageNumber) : null;
+---
+<MainLayout title={`Community · ${slug}`} channels={channels}>
+  <Breadcrumbs items={[{ label: 'Community', href: '/' }, { label: `#${channel?.name ?? 'unknown'}`, href: channel ? `/channels/${channel.slug}` : '/channels' }, { label: `Page ${pageNumber}` }]} />
+
+  {page ? (
+    <article class="p-1 md:p-2">
+      {page.messages.map((m) => <MessageItem message={m} />)}
+    </article>
+  ) : (
+    <p class="text-muted">Discussion page not found.</p>
+  )}
+</MainLayout>

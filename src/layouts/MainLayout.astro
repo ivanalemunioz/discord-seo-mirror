@@ -1,0 +1,146 @@
+---
+import '@/styles/global.css';
+import type { NavChannel } from '@/lib/types';
+import { getSiteMeta } from '@/lib/content';
+import { t } from '@/lib/i18n';
+import ChannelIcon from '@/components/ChannelIcon';
+
+interface Props {
+  title: string;
+  description?: string;
+  channels?: NavChannel[];
+  activeChannelId?: string;
+}
+
+const { title, description = 'Public Discord discussions mirrored for search.', channels = [], activeChannelId } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const siteMeta = await getSiteMeta();
+const inviteUrl = import.meta.env.PUBLIC_DISCORD_INVITE_URL || '';
+const hasInvite = Boolean(inviteUrl);
+const fullTitle = `${title} - ${siteMeta.serverName} Discord community`;
+const currentPath = Astro.url.pathname;
+const membersLabel = siteMeta.memberCount ? `${siteMeta.memberCount.toLocaleString()} members` : null;
+
+const isChannelActive = (slug: string, id: string) => {
+  if (activeChannelId) return activeChannelId === id;
+  return currentPath === `/channels/${slug}` || currentPath.startsWith(`/channels/${slug}/`);
+};
+
+const groups = new Map<string, NavChannel[]>();
+for (const channel of channels) {
+  const key = channel.category || 'Ungrouped';
+  if (!groups.has(key)) groups.set(key, []);
+  groups.get(key)!.push(channel);
+}
+---
+
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical.toString()} />
+    {siteMeta.serverIconUrl ? <link rel="icon" href={siteMeta.serverIconUrl} /> : null}
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical.toString()} />
+  </head>
+  <body>
+    <div class="min-h-screen">
+      <aside class="border-r border-line bg-surface p-4 hidden lg:block fixed left-0 top-0 h-screen w-[280px] overflow-y-auto">
+        <a href="/" class="font-semibold text-lg flex items-center gap-2">
+          {siteMeta.serverIconUrl ? <img src={siteMeta.serverIconUrl} alt={siteMeta.serverName} class="h-6 w-6 rounded-full" /> : null}
+          <span>{siteMeta.serverName}</span>
+        </a>
+        <p class="text-muted text-sm mt-1">{t('discordCommunity')}{membersLabel ? ` · ${membersLabel}` : ''}</p>
+        <nav class="mt-6 space-y-1">
+
+          {[...groups.entries()].map(([cat, list]) => (
+            <div class="pt-3">
+              {cat !== 'Ungrouped' ? <div class="px-3 text-[11px] uppercase tracking-wide text-muted">{cat}</div> : null}
+              <div class="mt-1 space-y-1">
+                {list.map((channel) => (
+                  <a class={`channel-row ${isChannelActive(channel.slug, channel.id) ? 'bg-panel text-text' : ''}`} href={`/channels/${channel.slug}`}>
+                    <span class="flex items-center gap-2">
+                      <ChannelIcon kind={channel.iconKind} className="h-4 w-4 text-muted" />
+                      <span>{channel.name}</span>
+                    </span>
+                    <span class="ml-auto text-xs">{channel.count}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))}
+        </nav>
+      </aside>
+      <main class="p-4 lg:p-8 lg:ml-[280px]">
+        <slot />
+      </main>
+    </div>
+
+    {hasInvite ? (
+      <div id="invite-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4 cursor-pointer">
+        <div id="invite-modal-card" class="relative w-full max-w-xl rounded-2xl border border-line bg-surface p-6 text-center shadow-2xl cursor-default">
+          <button id="invite-x-btn" class="absolute right-3 top-3 h-8 w-8 rounded-md border border-line bg-panel text-slate-300 hover:text-white">✕</button>
+          {siteMeta.serverIconUrl ? <img src={siteMeta.serverIconUrl} alt={siteMeta.serverName} class="mx-auto h-20 w-20 rounded-2xl" /> : null}
+          <p class="mt-4 text-lg text-slate-200">Join</p>
+          <h2 class="text-4xl font-bold mt-1">{siteMeta.serverName}</h2>
+          {membersLabel ? <p class="mt-1 text-sm text-muted">{membersLabel}</p> : null}
+          <a id="invite-join-btn" href={inviteUrl} target="_blank" rel="noreferrer" class="mt-6 block w-full rounded-xl bg-blurple px-4 py-3 text-lg font-semibold text-white hover:opacity-95">
+            Join the community
+          </a>
+          <button id="invite-close-btn" class="mt-3 w-full rounded-xl border border-line bg-panel px-4 py-3 text-lg text-slate-200">
+            Continue in browser
+          </button>
+        </div>
+      </div>
+    ) : null}
+
+    <script>
+      // @ts-nocheck
+      const fmt = new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'short',
+        timeStyle: 'short'
+      });
+      document.querySelectorAll('time[data-local-time]').forEach((el) => {
+        const dt = el.getAttribute('datetime');
+        if (!dt) return;
+        const d = new Date(dt);
+        if (Number.isNaN(d.getTime())) return;
+        el.textContent = fmt.format(d);
+      });
+
+      const modal = document.getElementById('invite-modal');
+      const closeBtn = document.getElementById('invite-close-btn');
+      const xBtn = document.getElementById('invite-x-btn');
+      const joinBtn = document.getElementById('invite-join-btn');
+      const card = document.getElementById('invite-modal-card');
+      const dismissedKey = 'discord_invite_modal_dismissed_v1';
+
+      if (modal && !localStorage.getItem(dismissedKey)) {
+        setTimeout(() => {
+          if (!localStorage.getItem(dismissedKey)) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+          }
+        }, 5 * 1000);
+
+        const dismiss = () => {
+          localStorage.setItem(dismissedKey, '1');
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+        };
+
+        closeBtn?.addEventListener('click', dismiss);
+        xBtn?.addEventListener('click', dismiss);
+        joinBtn?.addEventListener('click', dismiss);
+        modal.addEventListener('click', (ev) => {
+          if (card && !card.contains(ev.target)) dismiss();
+        });
+      }
+    </script>
+  </body>
+</html>

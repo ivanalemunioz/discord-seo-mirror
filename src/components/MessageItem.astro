@@ -1,0 +1,136 @@
+---
+// @ts-nocheck
+import { Marked } from 'marked';
+import { markedHighlight } from 'marked-highlight';
+import hljs from 'highlight.js';
+import { t } from '@/lib/i18n';
+
+const md = new Marked(
+  markedHighlight({
+    langPrefix: 'hljs language-',
+    highlight(code, lang) {
+      const valid = !!(lang && hljs.getLanguage(lang));
+      return valid
+        ? hljs.highlight(code, { language: lang }).value
+        : hljs.highlightAuto(code).value;
+    }
+  })
+);
+
+const { message, showAuthor = true } = Astro.props;
+const html = message.content ? md.parse(message.content) : '';
+const renderMd = (txt: string) => md.parse(txt || '');
+
+const isImage = (name: string) => /\.(png|jpe?g|gif|webp|svg)$/i.test(name);
+const isVideo = (name: string) => /\.(mp4|webm|mov|m4v)$/i.test(name);
+const isAudio = (name: string) => /\.(mp3|wav|ogg|m4a)$/i.test(name);
+const isPdf = (name: string) => /\.pdf$/i.test(name);
+---
+
+<div id={`m-${message.id}`} class="message-row border-b border-line/40 last:border-b-0">
+  <div class="message-inner py-3">
+    {message.replyTo ? (
+      <a href={message.replyTo.href || `#m-${message.replyTo.id}`} class="mb-1 flex items-center gap-3 text-xs text-muted hover:text-slate-300 min-w-0">
+        <div class="w-10 shrink-0 flex justify-end pb-1">
+          <span class="inline-block h-3 w-6 shrink-0 border-l-2 border-t-2 border-line/80 rounded-tl-md -mb-3 -mr-1" />
+        </div>
+        <div class="min-w-0 flex-1 flex items-center gap-2">
+          {message.replyTo.avatarUrl ? (
+            <img src={message.replyTo.avatarUrl} alt={message.replyTo.author || 'reply'} class="h-4 w-4 rounded-full object-cover shrink-0" loading="lazy" />
+          ) : (
+            <span class="h-4 w-4 rounded-full bg-panel border border-line shrink-0" />
+          )}
+          <span class="truncate min-w-0">
+            <span class="font-semibold text-slate-300">{message.replyTo.author || 'message'}</span>
+            {message.replyTo.content ? <span class="ml-1">{message.replyTo.content}</span> : null}
+          </span>
+        </div>
+      </a>
+    ) : null}
+
+    <div class="flex gap-3">
+      <div class="w-10 shrink-0">
+        {showAuthor ? (
+          message.authorAvatarUrl ? (
+            <img src={message.authorAvatarUrl} alt={message.author} class="h-10 w-10 rounded-full object-cover" loading="lazy" />
+          ) : (
+            <div class="h-10 w-10 rounded-full bg-panel border border-line" />
+          )
+        ) : null}
+      </div>
+
+      <div class="min-w-0 flex-1">
+        {showAuthor ? (
+          <div class="text-sm font-semibold text-slate-200">
+            {message.author}
+            <time class="text-xs text-muted font-normal ml-1" data-local-time datetime={message.timestamp}>{new Date(message.timestamp).toISOString()}</time>
+          </div>
+        ) : null}
+
+        {message.content ? (
+          <div class="mt-1 prose prose-invert max-w-none discord-message-stream" set:html={html} />
+        ) : null}
+
+      {message.thread ? (
+        <a href={`/threads/${message.thread.id}`} class="mt-2 block max-w-lg rounded-md bg-panel border border-line px-3 py-2 hover:border-blurple transition-colors">
+          <div class="text-sm font-semibold text-slate-200">{message.thread.name} <span class="text-blue-300">›</span></div>
+          <div class="text-xs text-muted mt-1">{message.thread.messageCount} messages{message.thread.preview ? ` · ${message.thread.preview}` : ''}</div>
+        </a>
+      ) : null}
+
+      {message.embeds?.length ? (
+        <div class="mt-2 space-y-2 max-w-2xl">
+          {message.embeds.map((e) => (
+            <div class="rounded-md border border-line bg-panel/60 px-3 py-2">
+              {e.title ? <div class="text-sm font-semibold text-slate-200">{e.title}</div> : null}
+              {e.description ? <div class="mt-1 text-sm discord-message-stream" set:html={renderMd(e.description)} /> : null}
+              {e.fields?.length ? (
+                <div class="mt-2 grid gap-1">
+                  {e.fields.map((f) => (
+                    <div class="text-xs">
+                      {f.name ? <span class="font-semibold text-slate-300">{f.name}: </span> : null}
+                      {f.value ? <span class="text-slate-300" set:html={renderMd(f.value)} /> : null}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {e.url ? <a href={e.url} target="_blank" rel="noreferrer" class="mt-2 inline-block text-xs">{t('openEmbedSource')}</a> : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {message.attachments?.length ? (
+        <div class="mt-2 space-y-3">
+          {message.attachments.map((a: { url: string; filename: string }) => {
+            const renderable = isImage(a.filename) || isVideo(a.filename) || isAudio(a.filename) || isPdf(a.filename);
+            return (
+              <div class="w-full lg:max-w-[50%]">
+                {isImage(a.filename) ? (
+                  <a href={a.url} target="_blank" rel="noreferrer">
+                    <img src={a.url} alt={a.filename} loading="lazy" class="w-full max-h-96 rounded-lg border border-line object-contain" />
+                  </a>
+                ) : isVideo(a.filename) ? (
+                  <video controls preload="metadata" class="w-full max-h-96 rounded-lg border border-line">
+                    <source src={a.url} />
+                  </video>
+                ) : isAudio(a.filename) ? (
+                  <audio controls preload="none" class="w-full">
+                    <source src={a.url} />
+                  </audio>
+                ) : isPdf(a.filename) ? (
+                  <iframe src={a.url} title={a.filename} class="w-full h-96 rounded-lg border border-line" loading="lazy"></iframe>
+                ) : null}
+                {!renderable ? (
+                  <div class="mt-1 text-sm">
+                    <a href={a.url} target="_blank" rel="noreferrer">{a.filename}</a>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  </div>
+</div>
