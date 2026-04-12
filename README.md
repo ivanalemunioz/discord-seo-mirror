@@ -4,7 +4,7 @@ Static Astro site that mirrors **public Discord community content** into crawlab
 
 <img width="2880" height="1342" alt="imagen" src="https://github.com/user-attachments/assets/d70ad3d8-fc51-4c0f-9d08-e108592464c6" />
 
-> Vibecoded with https://openclaw.ai/
+🦞 Vibecoded with https://openclaw.ai/
 
 ## Index
 
