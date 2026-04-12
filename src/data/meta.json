@@ -2,6 +2,7 @@
   "guild": {
     "id": "1250797857578025052",
     "name": "Afip SDK",
+    "description": "Este espacio está diseñado para apoyar a desarrolladores interesados en integrar y utilizar Afip SDK.",
     "iconUrl": "https://cdn.discordapp.com/icons/1250797857578025052/54a8ce80d911b8c6440eee56681a9ca5.png?size=128",
     "rulesChannelId": "1258409857237647420",
     "updatesChannelId": "1250950966581264516",

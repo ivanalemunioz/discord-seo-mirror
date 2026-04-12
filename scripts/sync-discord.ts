@@ -20,6 +20,7 @@ type Channel = {
 type Guild = {
   id: string;
   name: string;
+  description?: string | null;
   icon?: string | null;
   rules_channel_id?: string | null;
   public_updates_channel_id?: string | null;
@@ -353,6 +354,7 @@ async function writeMeta(guild: Guild, channels: Channel[], included: Channel[])
     guild: {
       id: guild.id,
       name: guild.name,
+      description: guild.description || null,
       iconUrl: guildIconUrl(guild),
       rulesChannelId: guild.rules_channel_id || null,
       updatesChannelId: guild.public_updates_channel_id || null,

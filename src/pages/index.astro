@@ -1,10 +1,14 @@
 ---
 import MainLayout from '@/layouts/MainLayout.astro';
-import { getChannelNav } from '@/lib/content';
+import { getChannelNav, getSiteMeta } from '@/lib/content';
 import { t } from '@/lib/i18n';
 import ChannelIcon from '@/components/ChannelIcon';
 
 const channels = await getChannelNav();
+const siteMeta = await getSiteMeta();
+const members = siteMeta.memberCount ? `${siteMeta.memberCount.toLocaleString()} members` : '';
+const homeDescription = `Join the ${siteMeta.serverName} Discord Server! ${siteMeta.serverDescription || ''}${siteMeta.serverDescription && members ? ' | ' : ''}${members}`.trim();
+
 const grouped = new Map<string, typeof channels>();
 for (const c of channels) {
   const key = c.category || 'Ungrouped';
@@ -13,7 +17,7 @@ for (const c of channels) {
 }
 ---
 
-<MainLayout title={t('channels')} description="Channel list" channels={channels}>
+<MainLayout title={t('channels')} description={homeDescription} channels={channels}>
   <h1 class="text-2xl font-semibold">{t('channels')}</h1>
 
   {[...grouped.entries()].map(([cat, list]) => (
