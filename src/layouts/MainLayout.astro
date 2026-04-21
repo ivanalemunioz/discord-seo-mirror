@@ -16,7 +16,9 @@ const { title, description = 'Public Discord discussions mirrored for search.', 
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const siteMeta = await getSiteMeta();
 const inviteUrl = import.meta.env.PUBLIC_DISCORD_INVITE_URL || '';
+const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID || '';
 const hasInvite = Boolean(inviteUrl);
+const hasGa = Boolean(gaId);
 const fullTitle = `${title} - ${siteMeta.serverName} Discord community`;
 const currentPath = Astro.url.pathname;
 const membersLabel = siteMeta.memberCount ? `${siteMeta.memberCount.toLocaleString()} members` : null;
@@ -47,6 +49,17 @@ for (const channel of channels) {
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical.toString()} />
+    {hasGa ? (
+      <>
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>
+        <script is:inline define:vars={{ gaId }}>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){window.dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', gaId);
+        </script>
+      </>
+    ) : null}
   </head>
   <body>
     <div class="min-h-screen">
